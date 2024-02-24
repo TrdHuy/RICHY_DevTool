@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace RICHY_DevTool.Utils
 {
-    public class List2<T> : IList2<T>, IList, IReadOnlyList<T>
+    public class ReadOnlyList<T> : IList, IReadOnlyList<T>
     {
         private const int DefaultCapacity = 4;
 
@@ -23,7 +24,7 @@ namespace RICHY_DevTool.Utils
         // of zero. Upon adding the first element to the list the capacity is
         // increased to DefaultCapacity, and then increased in multiples of two
         // as required.
-        public List2()
+        public ReadOnlyList()
         {
             _items = s_emptyArray;
         }
@@ -32,7 +33,7 @@ namespace RICHY_DevTool.Utils
         // initially empty, but will have room for the given number of elements
         // before any reallocations are required.
         //
-        public List2(int capacity)
+        public ReadOnlyList(int capacity)
         {
             if (capacity < 0)
                 throw new ArgumentOutOfRangeException();
@@ -47,7 +48,7 @@ namespace RICHY_DevTool.Utils
         // size and capacity of the new list will both be equal to the size of the
         // given collection.
         //
-        public List2(IEnumerable<T> collection)
+        public ReadOnlyList(IEnumerable<T> collection)
         {
             if (collection == null)
                 throw new ArgumentNullException();
@@ -90,7 +91,7 @@ namespace RICHY_DevTool.Utils
             {
                 if (value < _size)
                 {
-                    throw new  ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException();
                 }
 
                 if (value != _items.Length)
@@ -116,7 +117,7 @@ namespace RICHY_DevTool.Utils
 
         bool IList.IsFixedSize => false;
 
-        bool IList.IsReadOnly => false;
+        bool IList.IsReadOnly => true;
 
         bool ICollection.IsSynchronized => false;
 
@@ -192,7 +193,6 @@ namespace RICHY_DevTool.Utils
 
         int IList.Add(object? item)
         {
-            ThrowHelper.IfNullAndNullsAreIllegalThenThrow<T>(item, ExceptionArgument.item);
 
             try
             {
@@ -200,28 +200,19 @@ namespace RICHY_DevTool.Utils
             }
             catch (InvalidCastException)
             {
-                ThrowHelper.ThrowWrongValueTypeArgumentException(item, typeof(T));
             }
 
             return Count - 1;
         }
 
-        // Adds the elements of the given collection to the end of this list. If
-        // required, the capacity of the list is increased to twice the previous
-        // capacity or the new size, whichever is larger.
-        //
-        public void AddRange(IEnumerable<T> collection)
-            => InsertRange(_size, collection);
-
-
         public int BinarySearch(int index, int count, T item, IComparer<T>? comparer)
         {
             if (index < 0)
-                ThrowHelper.ThrowIndexArgumentOutOfRange_NeedNonNegNumException();
+                throw new ArgumentOutOfRangeException();
             if (count < 0)
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+                throw new ArgumentOutOfRangeException();
             if (_size - index < count)
-                ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
+                throw new ArgumentException();
 
             return Array.BinarySearch<T>(_items, index, count, item, comparer);
         }
@@ -232,38 +223,12 @@ namespace RICHY_DevTool.Utils
         public int BinarySearch(T item, IComparer<T>? comparer)
             => BinarySearch(0, Count, item, comparer);
 
-        public void Clear()
+        void IList.Clear()
         {
-            _version++;
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                int size = _size;
-                _size = 0;
-                if (size > 0)
-                {
-                    Array.Clear(_items, 0, size); // Clear the elements so that the gc can reclaim the references.
-                }
-            }
-            else
-            {
-                _size = 0;
-            }
         }
 
-        // Contains returns true if the specified element is in the List.
-        // It does a linear, O(n) search.  Equality is determined by calling
-        // EqualityComparer<T>.Default.Equals().
-        //
         public bool Contains(T item)
         {
-            // PERF: IndexOf calls Array.IndexOf, which internally
-            // calls EqualityComparer<T>.Default.IndexOf, which
-            // is specialized for different types. This
-            // boosts performance since instead of making a
-            // virtual method call each iteration of the loop,
-            // via EqualityComparer<T>.Default.Equals, we
-            // only make one virtual call to EqualityComparer.IndexOf.
-
             return _size != 0 && IndexOf(item) != -1;
         }
 
@@ -276,26 +241,7 @@ namespace RICHY_DevTool.Utils
             return false;
         }
 
-        public List<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
-        {
-            if (converter == null)
-            {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.converter);
-            }
 
-            List<TOutput> list = new List<TOutput>(_size);
-            for (int i = 0; i < _size; i++)
-            {
-                list._items[i] = converter(_items[i]);
-            }
-            list._size = _size;
-            return list;
-        }
-
-        // Copies this List into array, which must be of a
-        // compatible array type.
-        public void CopyTo(T[] array)
-            => CopyTo(array, 0);
 
         // Copies this List into array, which must be of a
         // compatible array type.
@@ -303,7 +249,7 @@ namespace RICHY_DevTool.Utils
         {
             if ((array != null) && (array.Rank != 1))
             {
-                ThrowHelper.ThrowArgumentException(ExceptionResource.Arg_RankMultiDimNotSupported);
+                throw new ArgumentException();
             }
 
             try
@@ -313,23 +259,8 @@ namespace RICHY_DevTool.Utils
             }
             catch (ArrayTypeMismatchException)
             {
-                ThrowHelper.ThrowArgumentException_Argument_InvalidArrayType();
+                throw new ArgumentException();
             }
-        }
-
-        // Copies a section of this list to the given array at the given index.
-        //
-        // The method uses the Array.Copy method to copy the elements.
-        //
-        public void CopyTo(int index, T[] array, int arrayIndex, int count)
-        {
-            if (_size - index < count)
-            {
-                ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
-            }
-
-            // Delegate rest of error checking to Array.Copy.
-            Array.Copy(_items, index, array, arrayIndex, count);
         }
 
         public void CopyTo(T[] array, int arrayIndex)
@@ -348,7 +279,7 @@ namespace RICHY_DevTool.Utils
         {
             if (capacity < 0)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.capacity, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+                throw new ArgumentOutOfRangeException();
             }
             if (_items.Length < capacity)
             {
@@ -387,7 +318,7 @@ namespace RICHY_DevTool.Utils
         {
             if (match == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.match);
+                throw new ArgumentNullException();
             }
 
             for (int i = 0; i < _size; i++)
@@ -404,7 +335,7 @@ namespace RICHY_DevTool.Utils
         {
             if (match == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.match);
+                throw new ArgumentNullException();
             }
 
             List<T> list = new List<T>();
@@ -428,17 +359,17 @@ namespace RICHY_DevTool.Utils
         {
             if ((uint)startIndex > (uint)_size)
             {
-                ThrowHelper.ThrowStartIndexArgumentOutOfRange_ArgumentOutOfRange_Index();
+                throw new ArgumentOutOfRangeException();
             }
 
             if (count < 0 || startIndex > _size - count)
             {
-                ThrowHelper.ThrowCountArgumentOutOfRange_ArgumentOutOfRange_Count();
+                throw new ArgumentOutOfRangeException();
             }
 
             if (match == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.match);
+                throw new ArgumentNullException();
             }
 
             int endIndex = startIndex + count;
@@ -453,7 +384,7 @@ namespace RICHY_DevTool.Utils
         {
             if (match == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.match);
+                throw new ArgumentNullException();
             }
 
             for (int i = _size - 1; i >= 0; i--)
@@ -476,7 +407,7 @@ namespace RICHY_DevTool.Utils
         {
             if (match == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.match);
+                throw new ArgumentNullException();
             }
 
             if (_size == 0)
@@ -484,7 +415,7 @@ namespace RICHY_DevTool.Utils
                 // Special case for 0 length List
                 if (startIndex != -1)
                 {
-                    ThrowHelper.ThrowStartIndexArgumentOutOfRange_ArgumentOutOfRange_Index();
+                    throw new ArgumentOutOfRangeException();
                 }
             }
             else
@@ -492,14 +423,14 @@ namespace RICHY_DevTool.Utils
                 // Make sure we're not out of range
                 if ((uint)startIndex >= (uint)_size)
                 {
-                    ThrowHelper.ThrowStartIndexArgumentOutOfRange_ArgumentOutOfRange_Index();
+                    throw new ArgumentOutOfRangeException();
                 }
             }
 
             // 2nd have of this also catches when startIndex == MAXINT, so MAXINT - 0 + 1 == -1, which is < 0.
             if (count < 0 || startIndex - count + 1 < 0)
             {
-                ThrowHelper.ThrowCountArgumentOutOfRange_ArgumentOutOfRange_Count();
+                throw new ArgumentOutOfRangeException();
             }
 
             int endIndex = startIndex - count;
@@ -517,7 +448,7 @@ namespace RICHY_DevTool.Utils
         {
             if (action == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action);
+                throw new ArgumentNullException();
             }
 
             int version = _version;
@@ -532,7 +463,7 @@ namespace RICHY_DevTool.Utils
             }
 
             if (version != _version)
-                ThrowHelper.ThrowInvalidOperationException_InvalidOperation_EnumFailedVersion();
+                throw new InvalidOperationException();
         }
 
         // Returns an enumerator for this list with the given
@@ -549,37 +480,29 @@ namespace RICHY_DevTool.Utils
         IEnumerator IEnumerable.GetEnumerator()
             => new Enumerator(this);
 
-        public List<T> GetRange(int index, int count)
+        public ReadOnlyList<T> GetRange(int index, int count)
         {
             if (index < 0)
             {
-                ThrowHelper.ThrowIndexArgumentOutOfRange_NeedNonNegNumException();
+                throw new IndexOutOfRangeException();
             }
 
             if (count < 0)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+                throw new ArgumentOutOfRangeException();
             }
 
             if (_size - index < count)
             {
-                ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
+                throw new ArgumentException();
             }
 
-            List<T> list = new List<T>(count);
+            ReadOnlyList<T> list = new ReadOnlyList<T>(count);
             Array.Copy(_items, index, list._items, 0, count);
             list._size = count;
             return list;
         }
 
-        // Returns the index of the first occurrence of a given value in a range of
-        // this list. The list is searched forwards from beginning to end.
-        // The elements of the list are compared to the given value using the
-        // Object.Equals method.
-        //
-        // This method uses the Array.IndexOf method to perform the
-        // search.
-        //
         public int IndexOf(T item)
             => Array.IndexOf(_items, item, 0, _size);
 
@@ -592,19 +515,11 @@ namespace RICHY_DevTool.Utils
             return -1;
         }
 
-        // Returns the index of the first occurrence of a given value in a range of
-        // this list. The list is searched forwards, starting at index
-        // index and ending at count number of elements. The
-        // elements of the list are compared to the given value using the
-        // Object.Equals method.
-        //
-        // This method uses the Array.IndexOf method to perform the
-        // search.
-        //
+      
         public int IndexOf(T item, int index)
         {
             if (index > _size)
-                ThrowHelper.ThrowArgumentOutOfRange_IndexException();
+                throw new ArgumentOutOfRangeException();
             return Array.IndexOf(_items, item, index, _size - index);
         }
 
@@ -620,116 +535,19 @@ namespace RICHY_DevTool.Utils
         public int IndexOf(T item, int index, int count)
         {
             if (index > _size)
-                ThrowHelper.ThrowArgumentOutOfRange_IndexException();
+                throw new ArgumentOutOfRangeException();
 
             if (count < 0 || index > _size - count)
-                ThrowHelper.ThrowCountArgumentOutOfRange_ArgumentOutOfRange_Count();
+                throw new ArgumentOutOfRangeException();
 
             return Array.IndexOf(_items, item, index, count);
         }
 
-        // Inserts an element into this list at a given index. The size of the list
-        // is increased by one. If required, the capacity of the list is doubled
-        // before inserting the new element.
-        //
-        public void Insert(int index, T item)
-        {
-            // Note that insertions at the end are legal.
-            if ((uint)index > (uint)_size)
-            {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_ListInsert);
-            }
-            if (_size == _items.Length) Grow(_size + 1);
-            if (index < _size)
-            {
-                Array.Copy(_items, index, _items, index + 1, _size - index);
-            }
-            _items[index] = item;
-            _size++;
-            _version++;
-        }
-
         void IList.Insert(int index, object? item)
         {
-            ThrowHelper.IfNullAndNullsAreIllegalThenThrow<T>(item, ExceptionArgument.item);
-
-            try
-            {
-                Insert(index, (T)item!);
-            }
-            catch (InvalidCastException)
-            {
-                ThrowHelper.ThrowWrongValueTypeArgumentException(item, typeof(T));
-            }
         }
 
-        // Inserts the elements of the given collection at a given index. If
-        // required, the capacity of the list is increased to twice the previous
-        // capacity or the new size, whichever is larger.  Ranges may be added
-        // to the end of the list by setting index to the List's size.
-        //
-        public void InsertRange(int index, IEnumerable<T> collection)
-        {
-            if (collection == null)
-            {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.collection);
-            }
-
-            if ((uint)index > (uint)_size)
-            {
-                ThrowHelper.ThrowArgumentOutOfRange_IndexException();
-            }
-
-            if (collection is ICollection<T> c)
-            {
-                int count = c.Count;
-                if (count > 0)
-                {
-                    if (_items.Length - _size < count)
-                    {
-                        Grow(_size + count);
-                    }
-                    if (index < _size)
-                    {
-                        Array.Copy(_items, index, _items, index + count, _size - index);
-                    }
-
-                    // If we're inserting a List into itself, we want to be able to deal with that.
-                    if (this == c)
-                    {
-                        // Copy first part of _items to insert location
-                        Array.Copy(_items, 0, _items, index, index);
-                        // Copy last part of _items back to inserted location
-                        Array.Copy(_items, index + count, _items, index * 2, _size - index);
-                    }
-                    else
-                    {
-                        c.CopyTo(_items, index);
-                    }
-                    _size += count;
-                }
-            }
-            else
-            {
-                using (IEnumerator<T> en = collection.GetEnumerator())
-                {
-                    while (en.MoveNext())
-                    {
-                        Insert(index++, en.Current);
-                    }
-                }
-            }
-            _version++;
-        }
-
-        // Returns the index of the last occurrence of a given value in a range of
-        // this list. The list is searched backwards, starting at the end
-        // and ending at the first element in the list. The elements of the list
-        // are compared to the given value using the Object.Equals method.
-        //
-        // This method uses the Array.LastIndexOf method to perform the
-        // search.
-        //
+        
         public int LastIndexOf(T item)
         {
             if (_size == 0)
@@ -742,19 +560,10 @@ namespace RICHY_DevTool.Utils
             }
         }
 
-        // Returns the index of the last occurrence of a given value in a range of
-        // this list. The list is searched backwards, starting at index
-        // index and ending at the first element in the list. The
-        // elements of the list are compared to the given value using the
-        // Object.Equals method.
-        //
-        // This method uses the Array.LastIndexOf method to perform the
-        // search.
-        //
         public int LastIndexOf(T item, int index)
         {
             if (index >= _size)
-                ThrowHelper.ThrowArgumentOutOfRange_IndexException();
+                throw new ArgumentOutOfRangeException();
             return LastIndexOf(item, index, index + 1);
         }
 
@@ -771,12 +580,12 @@ namespace RICHY_DevTool.Utils
         {
             if ((Count != 0) && (index < 0))
             {
-                ThrowHelper.ThrowIndexArgumentOutOfRange_NeedNonNegNumException();
+                throw new IndexOutOfRangeException();
             }
 
             if ((Count != 0) && (count < 0))
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+                throw new ArgumentOutOfRangeException();
             }
 
             if (_size == 0)
@@ -786,129 +595,27 @@ namespace RICHY_DevTool.Utils
 
             if (index >= _size)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_BiggerThanCollection);
+                throw new ArgumentOutOfRangeException();
             }
 
             if (count > index + 1)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_BiggerThanCollection);
+                throw new ArgumentOutOfRangeException();
             }
 
             return Array.LastIndexOf(_items, item, index, count);
         }
 
-        // Removes the element at the given index. The size of the list is
-        // decreased by one.
-        public bool Remove(T item)
-        {
-            int index = IndexOf(item);
-            if (index >= 0)
-            {
-                RemoveAt(index);
-                return true;
-            }
-
-            return false;
-        }
 
         void IList.Remove(object? item)
         {
-            if (IsCompatibleObject(item))
-            {
-                Remove((T)item!);
-            }
         }
 
-        // This method removes all items which matches the predicate.
-        // The complexity is O(n).
-        public int RemoveAll(Predicate<T> match)
+        void IList.RemoveAt(int index)
         {
-            if (match == null)
-            {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.match);
-            }
-
-            int freeIndex = 0;   // the first free slot in items array
-
-            // Find the first item which needs to be removed.
-            while (freeIndex < _size && !match(_items[freeIndex])) freeIndex++;
-            if (freeIndex >= _size) return 0;
-
-            int current = freeIndex + 1;
-            while (current < _size)
-            {
-                // Find the first item which needs to be kept.
-                while (current < _size && match(_items[current])) current++;
-
-                if (current < _size)
-                {
-                    // copy item to the free slot.
-                    _items[freeIndex++] = _items[current++];
-                }
-            }
-
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                Array.Clear(_items, freeIndex, _size - freeIndex); // Clear the elements so that the gc can reclaim the references.
-            }
-
-            int result = _size - freeIndex;
-            _size = freeIndex;
-            _version++;
-            return result;
         }
 
-        // Removes the element at the given index. The size of the list is
-        // decreased by one.
-        public void RemoveAt(int index)
-        {
-            if ((uint)index >= (uint)_size)
-            {
-                ThrowHelper.ThrowArgumentOutOfRange_IndexException();
-            }
-            _size--;
-            if (index < _size)
-            {
-                Array.Copy(_items, index + 1, _items, index, _size - index);
-            }
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                _items[_size] = default!;
-            }
-            _version++;
-        }
-
-        // Removes a range of elements from this list.
-        public void RemoveRange(int index, int count)
-        {
-            if (index < 0)
-            {
-                ThrowHelper.ThrowIndexArgumentOutOfRange_NeedNonNegNumException();
-            }
-
-            if (count < 0)
-            {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
-            }
-
-            if (_size - index < count)
-                ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
-
-            if (count > 0)
-            {
-                _size -= count;
-                if (index < _size)
-                {
-                    Array.Copy(_items, index + count, _items, index, _size - index);
-                }
-
-                _version++;
-                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-                {
-                    Array.Clear(_items, _size, count);
-                }
-            }
-        }
+       
 
         // Reverses the elements in this list.
         public void Reverse()
@@ -923,16 +630,16 @@ namespace RICHY_DevTool.Utils
         {
             if (index < 0)
             {
-                ThrowHelper.ThrowIndexArgumentOutOfRange_NeedNonNegNumException();
+                throw new IndexOutOfRangeException();
             }
 
             if (count < 0)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+                throw new ArgumentOutOfRangeException();
             }
 
             if (_size - index < count)
-                ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
+                throw new ArgumentException();
 
             if (count > 1)
             {
@@ -963,16 +670,16 @@ namespace RICHY_DevTool.Utils
         {
             if (index < 0)
             {
-                ThrowHelper.ThrowIndexArgumentOutOfRange_NeedNonNegNumException();
+                throw new IndexOutOfRangeException();
             }
 
             if (count < 0)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+                throw new ArgumentOutOfRangeException();
             }
 
             if (_size - index < count)
-                ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
+                throw new ArgumentException();
 
             if (count > 1)
             {
@@ -981,19 +688,6 @@ namespace RICHY_DevTool.Utils
             _version++;
         }
 
-        public void Sort(Comparison<T> comparison)
-        {
-            if (comparison == null)
-            {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.comparison);
-            }
-
-            if (_size > 1)
-            {
-                ArraySortHelper<T>.Sort(new Span<T>(_items, 0, _size), comparison);
-            }
-            _version++;
-        }
 
         // ToArray returns an array containing the contents of the List.
         // This requires copying the List, which is an O(n) operation.
@@ -1031,7 +725,7 @@ namespace RICHY_DevTool.Utils
         {
             if (match == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.match);
+                throw new ArgumentNullException();
             }
 
             for (int i = 0; i < _size; i++)
@@ -1046,12 +740,12 @@ namespace RICHY_DevTool.Utils
 
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
-            private readonly List<T> _list;
+            private readonly ReadOnlyList<T> _list;
             private int _index;
             private readonly int _version;
             private T? _current;
 
-            internal Enumerator(List<T> list)
+            internal Enumerator(ReadOnlyList<T> list)
             {
                 _list = list;
                 _index = 0;
@@ -1065,7 +759,7 @@ namespace RICHY_DevTool.Utils
 
             public bool MoveNext()
             {
-                List<T> localList = _list;
+                ReadOnlyList<T> localList = _list;
 
                 if (_version == localList._version && ((uint)_index < (uint)localList._size))
                 {
@@ -1080,7 +774,7 @@ namespace RICHY_DevTool.Utils
             {
                 if (_version != _list._version)
                 {
-                    ThrowHelper.ThrowInvalidOperationException_InvalidOperation_EnumFailedVersion();
+                    throw new InvalidOperationException();
                 }
 
                 _index = _list._size + 1;
@@ -1096,7 +790,7 @@ namespace RICHY_DevTool.Utils
                 {
                     if (_index == 0 || _index == _list._size + 1)
                     {
-                        ThrowHelper.ThrowInvalidOperationException_InvalidOperation_EnumOpCantHappen();
+                        throw new InvalidOperationException();
                     }
                     return Current;
                 }
@@ -1106,7 +800,7 @@ namespace RICHY_DevTool.Utils
             {
                 if (_version != _list._version)
                 {
-                    ThrowHelper.ThrowInvalidOperationException_InvalidOperation_EnumFailedVersion();
+                    throw new InvalidOperationException();
                 }
 
                 _index = 0;
@@ -1115,13 +809,12 @@ namespace RICHY_DevTool.Utils
         }
     }
 
-    internal class ReadOnlyCollection2<T> : IList, IReadOnlyList<T>
+    public class ReadOnlyCollection2<T> : IList, IReadOnlyList<T>
     {
-        private readonly IList2<T> list; // Do not rename (binary serialization)
+        private readonly IReadOnlyList<T> list; // Do not rename (binary serialization)
 
-        public ReadOnlyCollection2(IList2<T> list)
+        public ReadOnlyCollection2(IReadOnlyList<T> list)
         {
-
             this.list = list;
         }
 
@@ -1140,7 +833,7 @@ namespace RICHY_DevTool.Utils
             return list.GetEnumerator();
         }
 
-        protected IList2<T> Items => list;
+        protected IReadOnlyList<T> Items => list;
 
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -1182,7 +875,7 @@ namespace RICHY_DevTool.Utils
             return (value is T) || (value == null && default(T) == null);
         }
 
-        bool Contains(object? value)
+        public bool Contains(object? value)
         {
             if (IsCompatibleObject(value))
             {
@@ -1191,12 +884,12 @@ namespace RICHY_DevTool.Utils
             return false;
         }
 
-        //TODO
-        int IndexOf(object? value)
+
+        public int IndexOf(object? value)
         {
             if (IsCompatibleObject(value))
             {
-                return IndexOf((T)value!);
+                return (list as IList)?.IndexOf((T)value!) ?? -1;
             }
             return -1;
         }
@@ -1212,14 +905,10 @@ namespace RICHY_DevTool.Utils
         void IList.RemoveAt(int index)
         {
         }
-    }
-    internal interface IList2<out T> : ICollection2<T>, IEnumerable<T>, IEnumerable
-    {
-        T this[int index] { get; }
+
+        void ICollection.CopyTo(Array array, int index)
+        {
+        }
     }
 
-    public interface ICollection2<out T> : IEnumerable<T>, IEnumerable
-    {
-        int Count { get; }
-    }
 }
