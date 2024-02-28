@@ -4,6 +4,7 @@
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:RICHY_DevTool"
+		xmlns:wg="clr-namespace:RICHY_DevTool.View.Widgets"
 		mc:Ignorable="d"
 		Title="RICHYGraphTestWindow"
 		Height="500"
@@ -11,49 +12,8 @@
 		Loaded="Window_Loaded"
 		Width="800">
 	<Grid x:Name="ContainerGrid"
-		  Focusable="True"
-		  MouseEnter="ContainerGrid_MouseEnter"
-		  MouseLeave="ContainerGrid_MouseLeave"
-		  KeyUp="ContainerGrid_KeyUp"
-		  KeyDown="ContainerGrid_KeyDown"
-		  Background="Black"
 		  Width="650"
 		  Height="450">
-		<Canvas Background="Black"
-				x:Name="ContainerCanvas"
-				MouseMove="ContainerCanvas_MouseMove"
-				Width="600"
-				Height="400">
-			<TextBlock x:Name="CoorText"
-					   Text="(0,0)"
-					   Visibility="Hidden"
-					   Foreground="Aqua" />
-			<TextBlock x:Name="ReverseCoorText"
-					   Text="(0,0)"
-					   Visibility="Hidden"
-					   Foreground="Aqua" />
-			<TextBlock x:Name="IndexText"
-					   Text="(0,0)"
-					   Visibility="Hidden"
-					   Foreground="Aqua" />
-			<Line x:Name="Oy"
-				  Visibility="Hidden"
-				  X1="0"
-				  Y1="100"
-				  X2="100"
-				  Y2="100"
-				  Fill="Aqua"
-				  Stroke="Aqua"
-				  StrokeThickness="1" />
-			<Line x:Name="Ox"
-				  X1="0"
-				  Visibility="Hidden"
-				  Y1="0"
-				  X2="100"
-				  Y2="100"
-				  Fill="Aqua"
-				  Stroke="Aqua"
-				  StrokeThickness="1" />
-		</Canvas>
+		<wg:RichyGraph />
 	</Grid>
 </Window>

@@ -38,5 +38,12 @@ namespace RICHY_DevToolTest
             Collection<Dog> collectionDogs = new Collection<Dog>();
 
         }
+
+        [Test]
+        public void TestClassTest()
+        {
+            Class1 a = new Class1();
+            a.calCulate();
+        }
     }
 }
