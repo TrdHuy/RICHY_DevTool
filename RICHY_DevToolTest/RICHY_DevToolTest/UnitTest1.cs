@@ -1,4 +1,3 @@
-using RICHY_DevTool;
 using RICHYEngine;
 using System.Collections.ObjectModel;
 
@@ -43,7 +42,7 @@ namespace RICHY_DevToolTest
         public void TestClassTest()
         {
             Class1 a = new Class1();
-            a.calCulate();
+            a.calVerteVector2();
         }
     }
 }
