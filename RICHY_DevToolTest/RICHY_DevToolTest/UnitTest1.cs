@@ -41,8 +41,16 @@ namespace RICHY_DevToolTest
         [Test]
         public void TestClassTest()
         {
-            Class1 a = new Class1();
-            a.calVerteVector2();
+            List<int> list = new List<int>() { 1, 2, 3, 4 };
+
+            ObservableCollection<int> obsList = new ObservableCollection<int>(list);
+            obsList.CollectionChanged += (x, e) =>
+            {
+                var o = "";
+            };
+
+            list.Add(10);
+            obsList.Add(12);
         }
     }
 }
