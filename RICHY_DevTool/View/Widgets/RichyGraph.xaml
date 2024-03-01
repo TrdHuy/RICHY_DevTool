@@ -21,7 +21,6 @@
 			  KeyUp="ContainerGrid_KeyUp"
 			  KeyDown="ContainerGrid_KeyDown"
 			  Background="Black"
-			  ClipToBounds="True"
 			  Width="750"
 			  Height="450">
 			<Canvas x:Name="ControlCanvas"
@@ -58,12 +57,21 @@
 					  Stroke="Aqua"
 					  StrokeThickness="1" />
 			</Canvas>
-			<Canvas x:Name="ContainerCanvas"
-					MouseMove="ContainerCanvas_MouseMove"
+			<Canvas ClipToBounds="True"
 					Width="600"
 					Height="400">
-
+				<Canvas x:Name="ContainerCanvas"
+						MouseMove="ContainerCanvas_MouseMove"
+						Width="600"
+						Height="400">
+				</Canvas>
+				<Canvas x:Name="PointContainerCanvas"
+						MouseMove="ContainerCanvas_MouseMove"
+						Width="600"
+						Height="400">
+				</Canvas>
 			</Canvas>
+
 		</Grid>
 
 		<WrapPanel Grid.Row="2">

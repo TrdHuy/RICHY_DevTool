@@ -29,8 +29,8 @@ namespace RICHY_DevTool.View.Widgets
         {
             InitializeComponent();
             var pointSize = new Vector2(8, 8);
-            graphHolder = new GraphHolder(new GraphContainerImpl(ContainerCanvas),
-               () => new GraphPointImpl(ContainerCanvas, new Ellipse(), pointSize),
+            graphHolder = new GraphHolder(new GraphContainerImpl(ContainerCanvas, PointContainerCanvas),
+               () => new GraphPointImpl(PointContainerCanvas, new Ellipse(), pointSize),
                () => new GraphLineImpl(ContainerCanvas, new Line(), pointSize),
                () => new GraphLabelImpl(ContainerCanvas, new TextBlock()));
         }
@@ -184,7 +184,7 @@ namespace RICHY_DevTool.View.Widgets
         {
             ContainerCanvas = container;
         }
-        public Vector2 GetPosition()
+        public Vector2 GetPositionOnCanvas()
         {
             return Position;
         }
@@ -220,6 +220,7 @@ namespace RICHY_DevTool.View.Widgets
         }
 
         public abstract void SetUpVisual(GraphElement targetElement);
+
     }
 
     public class GraphLineImpl : CanvasChildImpl, IGraphLineDrawer
@@ -254,7 +255,7 @@ namespace RICHY_DevTool.View.Widgets
             }
         }
 
-        public void SetPosition(Vector2 firstPoint, Vector2 secondPoint)
+        public void SetPositionOnCanvas(Vector2 firstPoint, Vector2 secondPoint)
         {
             mLine.X1 = Convert.ToDouble(firstPoint.X);
             mLine.Y1 = CanvasHeight - Convert.ToDouble(firstPoint.Y);
@@ -274,7 +275,7 @@ namespace RICHY_DevTool.View.Widgets
         }
 
 
-        public void SetPosition(GraphElement targetElement, Vector2 position)
+        public void SetPositionOnCanvas(GraphElement targetElement, Vector2 position)
         {
             Position = position;
             SetReversePos(new Vector2(position.X - mPointSize.X / 2, position.Y + mPointSize.Y / 2), mPoint);
@@ -288,23 +289,51 @@ namespace RICHY_DevTool.View.Widgets
         }
 
     }
+    public class CanvasHolderImpl : ICanvasHolder
+    {
+        private Canvas mContainerCanvas;
+        public CanvasHolderImpl(Canvas canvasHolder)
+        {
+            mContainerCanvas = canvasHolder;
+        }
+
+        public void Clear()
+        {
+            mContainerCanvas.Children.Clear();
+        }
+
+        public void SetCanvasPosition(Vector2 position)
+        {
+            SetReversePos(position, mContainerCanvas);
+        }
+
+        protected void SetReversePos(Vector2 position, UIElement element)
+        {
+            Canvas.SetLeft(element, position.X);
+            Canvas.SetTop(element, mContainerCanvas.ActualHeight - position.Y);
+        }
+
+    }
     public class GraphContainerImpl : IGraphContainer
     {
         private Canvas mContainerCanvas;
-        public GraphContainerImpl(Canvas containerCanvas)
+        private ICanvasHolder mPointContainerCanvasHolder;
+        public GraphContainerImpl(Canvas containerCanvas, Canvas pointContainerCanvas)
         {
             mContainerCanvas = containerCanvas;
+            mPointContainerCanvasHolder = new CanvasHolderImpl(pointContainerCanvas);
         }
         public float GraphHeight => (float)mContainerCanvas.ActualHeight;
 
         public float GraphWidth => (float)mContainerCanvas.ActualWidth;
+
+        public ICanvasHolder PointCanvasHolder => mPointContainerCanvasHolder;
 
         public void Clear()
         {
             mContainerCanvas.Children.Clear();
         }
     }
-
     public class GraphLabelImpl : CanvasChildImpl, IGraphLabelDrawer
     {
         protected override UIElement Child => TextBlock;
@@ -315,7 +344,7 @@ namespace RICHY_DevTool.View.Widgets
             TextBlock = textBlock;
         }
 
-        public void SetPosition(GraphElement targetElement, Vector2 position)
+        public void SetPositionOnCanvas(GraphElement targetElement, Vector2 position)
         {
             if (targetElement == GraphElement.LabelY)
             {
