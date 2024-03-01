@@ -1,57 +1,91 @@
 ﻿<UserControl x:Class="RICHY_DevTool.View.Widgets.RichyGraph"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:RICHY_DevTool.View.Widgets"
-             mc:Ignorable="d" 
+			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:local="clr-namespace:RICHY_DevTool.View.Widgets"
+			 mc:Ignorable="d"
 			 Loaded="UserControl_Loaded"
-             d:DesignHeight="450" d:DesignWidth="800">
-	<Grid x:Name="ContainerGrid"
-		  Focusable="True"
-		  MouseEnter="ContainerGrid_MouseEnter"
-		  MouseLeave="ContainerGrid_MouseLeave"
-		  KeyUp="ContainerGrid_KeyUp"
-		  KeyDown="ContainerGrid_KeyDown"
-		  Background="Black"
-		  ClipToBounds="True"
-		  Width="650"
-		  Height="450">
-		<Canvas Background="Black"
-				x:Name="ContainerCanvas"
-				MouseMove="ContainerCanvas_MouseMove"
-				Width="600"
-				Height="400">
-			<TextBlock x:Name="CoorText"
-					   Text="(0,0)"
-					   Visibility="Hidden"
-					   Foreground="Aqua" />
-			<TextBlock x:Name="ReverseCoorText"
-					   Text="(0,0)"
-					   Visibility="Hidden"
-					   Foreground="Aqua" />
-			<TextBlock x:Name="IndexText"
-					   Text="(0,0)"
-					   Visibility="Hidden"
-					   Foreground="Aqua" />
-			<Line x:Name="Oy"
-				  Visibility="Hidden"
-				  X1="0"
-				  Y1="100"
-				  X2="100"
-				  Y2="100"
-				  Fill="Aqua"
-				  Stroke="Aqua"
-				  StrokeThickness="1" />
-			<Line x:Name="Ox"
-				  X1="0"
-				  Visibility="Hidden"
-				  Y1="0"
-				  X2="100"
-				  Y2="100"
-				  Fill="Aqua"
-				  Stroke="Aqua"
-				  StrokeThickness="1" />
-		</Canvas>
+			 d:DesignWidth="800">
+
+	<Grid Background="Wheat">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="10" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<Grid x:Name="ContainerGrid"
+			  Focusable="True"
+			  MouseEnter="ContainerGrid_MouseEnter"
+			  MouseLeave="ContainerGrid_MouseLeave"
+			  KeyUp="ContainerGrid_KeyUp"
+			  KeyDown="ContainerGrid_KeyDown"
+			  Background="Black"
+			  ClipToBounds="True"
+			  Width="750"
+			  Height="450">
+			<Canvas x:Name="ControlCanvas"
+					Width="{Binding ElementName=ContainerCanvas, Path=ActualWidth}"
+					Height="{Binding ElementName=ContainerCanvas, Path=ActualHeight}">
+				<TextBlock x:Name="CoorText"
+						   Text="(0,0)"
+						   Visibility="Hidden"
+						   Foreground="Aqua" />
+				<TextBlock x:Name="ReverseCoorText"
+						   Text="(0,0)"
+						   Visibility="Hidden"
+						   Foreground="Aqua" />
+				<TextBlock x:Name="IndexText"
+						   Text="(0,0)"
+						   Visibility="Hidden"
+						   Foreground="Aqua" />
+				<Line x:Name="Oy"
+					  Visibility="Hidden"
+					  X1="0"
+					  Y1="100"
+					  X2="100"
+					  Y2="100"
+					  Fill="Aqua"
+					  Stroke="Aqua"
+					  StrokeThickness="1" />
+				<Line x:Name="Ox"
+					  X1="0"
+					  Visibility="Hidden"
+					  Y1="0"
+					  X2="100"
+					  Y2="100"
+					  Fill="Aqua"
+					  Stroke="Aqua"
+					  StrokeThickness="1" />
+			</Canvas>
+			<Canvas x:Name="ContainerCanvas"
+					MouseMove="ContainerCanvas_MouseMove"
+					Width="600"
+					Height="400">
+
+			</Canvas>
+		</Grid>
+
+		<WrapPanel Grid.Row="2">
+			<Border BorderThickness="1"
+					BorderBrush="Black">
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="Zoom Y"
+							   FontWeight="Bold" />
+
+					<Slider x:Name="YMaxSlider"
+							Width="200"
+							Maximum="400"
+							Minimum="1"
+							Value="100"
+							ValueChanged="Slider_ValueChanged" />
+					<TextBlock Text="{Binding ElementName=YMaxSlider, Path=Value, StringFormat='#'}" />
+				</StackPanel>
+			</Border>
+			
+
+
+		</WrapPanel>
 	</Grid>
+
 </UserControl>

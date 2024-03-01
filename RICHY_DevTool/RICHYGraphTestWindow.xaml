@@ -11,9 +11,7 @@
 		Background="Brown"
 		Loaded="Window_Loaded"
 		Width="800">
-	<Grid x:Name="ContainerGrid"
-		  Width="650"
-		  Height="450">
+	<Grid x:Name="ContainerGrid">
 		<wg:RichyGraph />
 	</Grid>
 </Window>

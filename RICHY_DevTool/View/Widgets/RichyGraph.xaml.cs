@@ -101,7 +101,7 @@ namespace RICHY_DevTool.View.Widgets
             Canvas.SetLeft(ReverseCoorText, mousePos.X + 20);
             Canvas.SetTop(ReverseCoorText, mousePos.Y - 20);
 
-            IndexText.Text = $"{(ContainerCanvas.ActualHeight - mousePos.Y) / ContainerCanvas.ActualHeight * 100}";
+            IndexText.Text = $"{(int)((ContainerCanvas.ActualHeight - mousePos.Y) / ContainerCanvas.ActualHeight * YMaxSlider.Value)}";
             Canvas.SetLeft(IndexText, mousePos.X + 20);
             Canvas.SetTop(IndexText, mousePos.Y - 20);
         }
@@ -133,6 +133,11 @@ namespace RICHY_DevTool.View.Widgets
         IGraphPointValue CreateValue(int xValue)
         {
             return new GraphPointValueImpl(xValue);
+        }
+
+        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            graphHolder?.ChangeYMax((int)e.NewValue);
         }
     }
 
@@ -262,7 +267,7 @@ namespace RICHY_DevTool.View.Widgets
         }
 
 
-        public void SetPosition(Vector2 position)
+        public void SetPosition(GraphElement targetElement, Vector2 position)
         {
             Position = position;
             SetReversePos(new Vector2(position.X - mPointSize.X / 2, position.Y + mPointSize.Y / 2), mPoint);
@@ -303,19 +308,32 @@ namespace RICHY_DevTool.View.Widgets
             TextBlock = textBlock;
         }
 
-        public void SetPosition(Vector2 position)
+        public void SetPosition(GraphElement targetElement, Vector2 position)
         {
-            SetReversePos(position, TextBlock);
+            if (targetElement == GraphElement.LabelY)
+            {
+                SetPosStartFromLeft(new Vector2(position.X, position.Y + 10));
+            }
+            else
+            {
+                SetReversePos(position, TextBlock);
+            }
         }
 
         public void SetText(string text)
         {
             TextBlock.Text = text;
+            TextBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         }
 
         public override void SetUpVisual(GraphElement targetElement)
         {
             TextBlock.Foreground = Brushes.White;
+        }
+
+        private void SetPosStartFromLeft(Vector2 pos)
+        {
+            SetReversePos(new Vector2(pos.X - (float)TextBlock.DesiredSize.Width, pos.Y), TextBlock);
         }
     }
 
