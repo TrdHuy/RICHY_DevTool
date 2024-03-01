@@ -81,9 +81,23 @@
 							ValueChanged="Slider_ValueChanged" />
 					<TextBlock Text="{Binding ElementName=YMaxSlider, Path=Value, StringFormat='#'}" />
 				</StackPanel>
-			</Border>
-			
 
+			</Border>
+			<Border BorderThickness="1"
+					BorderBrush="Black">
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="Zoom X"
+							   FontWeight="Bold" />
+
+					<Slider x:Name="XDistanceSlider"
+							Width="200"
+							Maximum="400"
+							Minimum="1"
+							Value="50"
+							ValueChanged="Slider_ValueChanged" />
+					<TextBlock Text="{Binding ElementName=XDistanceSlider, Path=Value, StringFormat='#'}" />
+				</StackPanel>
+			</Border>
 
 		</WrapPanel>
 	</Grid>
