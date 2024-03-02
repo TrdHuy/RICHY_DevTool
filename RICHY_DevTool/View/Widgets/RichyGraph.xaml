@@ -141,7 +141,9 @@
 								  Grid.Column="1" />
 				</Grid>
 			</Border>
-
+			<Button Content="Add New Value" 
+					x:Name="AddNewValueBut"
+					Click="Button_Click"/>
 		</WrapPanel>
 	</Grid>
 

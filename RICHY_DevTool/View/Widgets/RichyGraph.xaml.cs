@@ -171,17 +171,24 @@ namespace RICHY_DevTool.View.Widgets
             {
                 graphHolder.MoveGraph(0, 10);
             }
+            else if (sender == AddNewValueBut)
+            {
+                Random r = new Random();
+                graphHolder.AddPointValue(CreateValue(r.Next(0, 200)));
+            }
         }
     }
 
     public class GraphPointValueImpl : IGraphPointValue
     {
-        private int xValue;
-        public int XValue => xValue;
+        private int yValue;
+        public int YValue => yValue;
+
+        public object XValue => null;
 
         public GraphPointValueImpl(int xValue)
         {
-            this.xValue = xValue;
+            this.yValue = xValue;
         }
 
     }
@@ -369,7 +376,7 @@ namespace RICHY_DevTool.View.Widgets
         {
             if (targetElement == GraphElement.LabelY)
             {
-                SetPosStartFromLeft(new Vector2(position.X, position.Y + 10));
+                SetPosStartFromLeft(new Vector2(position.X + 5, position.Y + 20));
             }
             else
             {
