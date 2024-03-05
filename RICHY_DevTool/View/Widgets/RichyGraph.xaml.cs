@@ -28,7 +28,7 @@ namespace RICHY_DevTool.View.Widgets
         {
             InitializeComponent();
             var pointSize = new Vector2(8, 8);
-            graphHolder = new GraphHolder(new GraphContainerImpl(ContainerCanvas, PointContainerCanvas),
+            graphHolder = new VirtualizingGraphHolder(new GraphContainerImpl(ContainerCanvas, PointContainerCanvas),
                (targetEle) => new GraphPointImpl(PointContainerCanvas, new Ellipse(), pointSize),
                (targetEle) =>
                {
@@ -222,7 +222,7 @@ namespace RICHY_DevTool.View.Widgets
             return Position;
         }
 
-        public bool SetParent(GraphElement targetElement)
+        public bool SetIntoParent(GraphElement targetElement)
         {
             if (!ContainerCanvas.Children.Contains(Child))
             {
@@ -244,6 +244,15 @@ namespace RICHY_DevTool.View.Widgets
                 Panel.SetZIndex(Child, zIndex);
             }
             return true;
+        }
+
+        public bool RemoveFromParent(GraphElement targetElement)
+        {
+            if (ContainerCanvas.Children.Contains(Child))
+            {
+                ContainerCanvas.Children.Remove(Child);
+            }
+            return false;
         }
 
         protected void SetReversePos(Vector2 position, UIElement element)

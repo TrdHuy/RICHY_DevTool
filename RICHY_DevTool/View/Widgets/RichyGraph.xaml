@@ -23,8 +23,8 @@
 			  Background="Black"
 			  Width="750"
 			  Height="450">
-			<Canvas ClipToBounds="True"
-					Width="600"
+			<Canvas Width="600"
+					Background="DarkGray"
 					Height="400">
 				<Canvas x:Name="ContainerCanvas"
 						Width="600"
