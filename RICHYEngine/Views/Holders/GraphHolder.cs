@@ -99,7 +99,7 @@ namespace RICHYEngine.Views.Holders
 
         protected GraphElementCache elementCache = new GraphElementCache();
         protected List<IGraphPointValue>? mCurrentShowingValueList;
-        private float yMax = 100f;
+        protected float yMax = 100f;
         protected float xPointDistance = 50f;
         protected int mPointCanvasHolderLeft;
         protected int mPointCanvasHolderTop;
@@ -121,7 +121,7 @@ namespace RICHYEngine.Views.Holders
             return (-DISPLAY_OFFSET_Y + mousePos.Y + mPointCanvasHolderTop) * rate;
         }
 
-        public void AddPointValue(IGraphPointValue newValue)
+        public virtual void AddPointValue(IGraphPointValue newValue)
         {
             if (mCurrentShowingValueList != null)
             {
@@ -161,7 +161,7 @@ namespace RICHYEngine.Views.Holders
             }
         }
 
-        public void ChangeYMax(float offset)
+        public virtual void ChangeYMax(float offset)
         {
             yMax = offset;
             if (mCurrentShowingValueList != null)
@@ -170,7 +170,7 @@ namespace RICHYEngine.Views.Holders
             }
         }
 
-        public void ChangeXDistance(float distance)
+        public virtual void ChangeXDistance(float distance)
         {
             var newDistance = distance < X_POINT_DISTANCE_MIN ? X_POINT_DISTANCE_MIN : distance;
             if (mCurrentShowingValueList != null && xPointDistance != newDistance)
