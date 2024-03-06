@@ -233,7 +233,7 @@ namespace RICHYEngine.Views.Holders
             }
         }
 
-        private void InvalidateLabelY(float graphHeight, float dashYDistance)
+        protected void InvalidateLabelY(float graphHeight, float dashYDistance)
         {
             for (int i = 0; i < elementCache.labelYDrawers.Count; i++)
             {

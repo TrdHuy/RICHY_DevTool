@@ -58,6 +58,8 @@ namespace RICHYEngine.Views.Holders
             {
                 yMax = newYMax;
                 RearrangePointAndConnection(DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, yMax, mGraphContainer.GraphHeight);
+                InvalidateLabelY(mGraphContainer.GraphHeight, dashDistanceY);
+
             }
         }
 
