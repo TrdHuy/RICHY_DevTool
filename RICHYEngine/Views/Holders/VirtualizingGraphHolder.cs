@@ -63,6 +63,28 @@ namespace RICHYEngine.Views.Holders
             }
         }
 
+        public void ChangeZoomX(float offset)
+        {
+            var newDistance = xPointDistance + offset;
+            if (newDistance != xPointDistance)
+            {
+                if (newDistance < X_POINT_DISTANCE_MIN)
+                {
+                    newDistance = X_POINT_DISTANCE_DEF;
+                    mCurrentPointOffsetCount++;
+                }
+                else if (newDistance > X_POINT_DISTANCE_MAX && mCurrentPointOffsetCount > 0)
+                {
+                    newDistance = X_POINT_DISTANCE_DEF;
+                    mCurrentPointOffsetCount--;
+                }
+                xPointDistance = newDistance;
+                if (mCurrentShowingValueList != null)
+                {
+                    ShowGraph(mCurrentShowingValueList);
+                }
+            }
+        }
         public override void ChangeXDistance(float distance)
         {
             var newDistance = distance < X_POINT_DISTANCE_MIN ? X_POINT_DISTANCE_MIN : distance;

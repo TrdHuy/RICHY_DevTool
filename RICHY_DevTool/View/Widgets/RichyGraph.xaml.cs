@@ -22,7 +22,7 @@ namespace RICHY_DevTool.View.Widgets
     /// </summary>
     public partial class RichyGraph : UserControl
     {
-        private GraphHolder graphHolder;
+        private VirtualizingGraphHolder graphHolder;
 
         public RichyGraph()
         {
@@ -122,29 +122,29 @@ namespace RICHY_DevTool.View.Widgets
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            var listValue = new List<IGraphPointValue>() { CreateValue(32),
-                CreateValue(42) ,
-                CreateValue(53) ,
-                CreateValue(12) ,
-                CreateValue(64) ,
-                CreateValue(63) ,
-                CreateValue(87) ,
-                CreateValue(130) ,
-                CreateValue(14) ,
-                CreateValue(52) ,
-                CreateValue(53) ,
-                CreateValue(54) ,
-                CreateValue(55) ,
-                CreateValue(56) ,
-                CreateValue(57) ,
-                CreateValue(53) ,
-                CreateValue(64) };
+            var listValue = new List<IGraphPointValue>() { CreateValue(32,0),
+                CreateValue(42,1) ,
+                CreateValue(53,2) ,
+                CreateValue(12,3) ,
+                CreateValue(64,4) ,
+                CreateValue(63,5) ,
+                CreateValue(87,6) ,
+                CreateValue(130,7) ,
+                CreateValue(14,8) ,
+                CreateValue(52,9) ,
+                CreateValue(53,10) ,
+                CreateValue(54,11) ,
+                CreateValue(55,12) ,
+                CreateValue(56,13) ,
+                CreateValue(57,14) ,
+                CreateValue(53,15) ,
+                CreateValue(64,16) };
             graphHolder.ShowGraph(listValue);
         }
 
-        IGraphPointValue CreateValue(int xValue)
+        IGraphPointValue CreateValue(int yValue, int xValue)
         {
-            return new GraphPointValueImpl(xValue);
+            return new GraphPointValueImpl(yValue, xValue);
         }
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -155,7 +155,7 @@ namespace RICHY_DevTool.View.Widgets
             }
             else if (sender == XDistanceSlider)
             {
-                graphHolder?.ChangeXDistance((int)e.NewValue);
+                graphHolder?.ChangeZoomX((int)e.NewValue - (int)e.OldValue);
             }
         }
 
@@ -180,7 +180,7 @@ namespace RICHY_DevTool.View.Widgets
             else if (sender == AddNewValueBut)
             {
                 Random r = new Random();
-                graphHolder.AddPointValue(CreateValue(r.Next(0, 200)));
+                graphHolder.AddPointValue(CreateValue(r.Next(0, 200), 100));
             }
         }
     }
@@ -188,13 +188,15 @@ namespace RICHY_DevTool.View.Widgets
     public class GraphPointValueImpl : IGraphPointValue
     {
         private int yValue;
+        private int xValue;
         public int YValue => yValue;
 
-        public object XValue => null;
+        public object XValue => xValue;
 
-        public GraphPointValueImpl(int xValue)
+        public GraphPointValueImpl(int yValue, int xValue)
         {
-            this.yValue = xValue;
+            this.yValue = yValue;
+            this.xValue = xValue;
         }
 
     }
