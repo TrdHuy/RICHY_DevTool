@@ -22,7 +22,7 @@ namespace RICHY_DevTool.View.Widgets
     /// </summary>
     public partial class RichyGraph : UserControl
     {
-        private VirtualizingGraphHolder graphHolder;
+        private GraphHolder graphHolder;
 
         public RichyGraph()
         {
@@ -38,6 +38,7 @@ namespace RICHY_DevTool.View.Widgets
                    }
                    return new GraphLineImpl(ContainerCanvas, new Line(), pointSize);
                },
+               (targetEle) => new GraphLabelImpl(ContainerCanvas, new TextBlock()),
                (targetEle) => new GraphLabelImpl(ContainerCanvas, new TextBlock()));
         }
 
@@ -155,7 +156,7 @@ namespace RICHY_DevTool.View.Widgets
             }
             else if (sender == XDistanceSlider)
             {
-                graphHolder?.ChangeZoomX((int)e.NewValue - (int)e.OldValue);
+                //graphHolder?.ChangeZoomX((int)e.NewValue - (int)e.OldValue);
             }
         }
 
@@ -377,6 +378,45 @@ namespace RICHY_DevTool.View.Widgets
         public void Clear()
         {
             mContainerCanvas.Children.Clear();
+        }
+    }
+
+    public class GraphLabelImpl : CanvasChildImpl, IGraphPolyLineDrawer
+    {
+        protected override UIElement Child => TextBlock;
+        private TextBlock TextBlock;
+
+        public GraphLabelImpl(Canvas container, TextBlock textBlock) : base(container)
+        {
+            TextBlock = textBlock;
+        }
+
+        public void SetPositionOnCanvas(GraphElement targetElement, Vector2 position)
+        {
+            if (targetElement == GraphElement.LabelY)
+            {
+                SetPosStartFromLeft(new Vector2(position.X + 5, position.Y + 20));
+            }
+            else
+            {
+                SetReversePos(position, TextBlock);
+            }
+        }
+
+        public void SetText(string text)
+        {
+            TextBlock.Text = text;
+            TextBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        }
+
+        public override void SetUpVisual(GraphElement targetElement)
+        {
+            TextBlock.Foreground = Brushes.White;
+        }
+
+        private void SetPosStartFromLeft(Vector2 pos)
+        {
+            SetReversePos(new Vector2(pos.X - (float)TextBlock.DesiredSize.Width, pos.Y), TextBlock);
         }
     }
     public class GraphLabelImpl : CanvasChildImpl, IGraphLabelDrawer
