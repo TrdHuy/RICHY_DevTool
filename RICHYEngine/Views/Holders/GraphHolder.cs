@@ -61,6 +61,8 @@ namespace RICHYEngine.Views.Holders
     public interface IGraphPolyLineDrawer : ICanvasChild
     {
         void AddNewPoint(Vector2 point);
+
+        void ChangePointPosition(int pointIndex, Vector2 newPos);
     }
     public interface IGraphPointDrawer : ICanvasChild
     {
@@ -273,7 +275,8 @@ namespace RICHYEngine.Views.Holders
         {
             IGraphPolyLineDrawer graphPolyLineDrawer = mGraphPolyLineGenerator.Invoke(GraphElement.Line);
             elementCache.lineConnectionDrawer = graphPolyLineDrawer;
-            IGraphPointDrawer? lastPoint = null;
+            graphPolyLineDrawer.SetIntoParent(targetElement:GraphElement.Line);
+            graphPolyLineDrawer.SetUpVisual(targetElement:GraphElement.Line);
             for (int i = 0; i < showingList.Count; i++)
             {
                 GenerateLabelX(showingList[i], displayOffsetY, displayOffsetX, i);
@@ -284,7 +287,6 @@ namespace RICHYEngine.Views.Holders
                 //{
                 //    GeneratePointConnection(lastPoint.GetPositionOnCanvas(), point.GetPositionOnCanvas(), i - 1);
                 //}
-                lastPoint = point;
             }
         }
 

@@ -2,16 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using static RICHYEngine.Views.Holders.ICanvasChild;
 
@@ -39,7 +33,7 @@ namespace RICHY_DevTool.View.Widgets
                    return new GraphLineImpl(ContainerCanvas, new Line(), pointSize);
                },
                (targetEle) => new GraphLabelImpl(ContainerCanvas, new TextBlock()),
-               (targetEle) => new GraphLabelImpl(ContainerCanvas, new TextBlock()));
+               (targetEle) => new GraphPolyLineImpl(PointContainerCanvas, new Polyline()));
         }
 
         private void ContainerGrid_MouseEnter(object sender, MouseEventArgs e)
@@ -207,6 +201,7 @@ namespace RICHY_DevTool.View.Widgets
         Line = 99,
         Point = 100,
         LineDash = 0,
+        OxOy = 1
     }
 
     public abstract class CanvasChildImpl : ICanvasChild
@@ -249,6 +244,10 @@ namespace RICHY_DevTool.View.Widgets
                     case GraphElement.DashY:
                         zIndex = (int)GraphZIndex.LineDash;
                         break;
+                    case GraphElement.Ox:
+                    case GraphElement.Oy:
+                        zIndex = (int)GraphZIndex.OxOy;
+                        break;
                 }
                 Panel.SetZIndex(Child, zIndex);
             }
@@ -269,7 +268,10 @@ namespace RICHY_DevTool.View.Widgets
             Canvas.SetLeft(element, position.X);
             Canvas.SetTop(element, CanvasHeight - position.Y);
         }
-
+        protected Vector2 GetReversePos(Vector2 originalPos)
+        {
+            return new Vector2(originalPos.X, CanvasHeight - originalPos.Y);
+        }
         public abstract void SetUpVisual(GraphElement targetElement);
 
     }
@@ -381,42 +383,34 @@ namespace RICHY_DevTool.View.Widgets
         }
     }
 
-    public class GraphLabelImpl : CanvasChildImpl, IGraphPolyLineDrawer
+    public class GraphPolyLineImpl : CanvasChildImpl, IGraphPolyLineDrawer
     {
-        protected override UIElement Child => TextBlock;
-        private TextBlock TextBlock;
+        protected override UIElement Child => mPolyLine;
+        private Polyline mPolyLine;
 
-        public GraphLabelImpl(Canvas container, TextBlock textBlock) : base(container)
+        public GraphPolyLineImpl(Canvas container, Polyline polyLine) : base(container)
         {
-            TextBlock = textBlock;
+            mPolyLine = polyLine;
         }
 
-        public void SetPositionOnCanvas(GraphElement targetElement, Vector2 position)
-        {
-            if (targetElement == GraphElement.LabelY)
-            {
-                SetPosStartFromLeft(new Vector2(position.X + 5, position.Y + 20));
-            }
-            else
-            {
-                SetReversePos(position, TextBlock);
-            }
-        }
-
-        public void SetText(string text)
-        {
-            TextBlock.Text = text;
-            TextBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        }
 
         public override void SetUpVisual(GraphElement targetElement)
         {
-            TextBlock.Foreground = Brushes.White;
+            mPolyLine.Stroke = Brushes.Aqua;
+            mPolyLine.StrokeThickness = 2;
         }
 
-        private void SetPosStartFromLeft(Vector2 pos)
+
+        public void AddNewPoint(Vector2 point)
         {
-            SetReversePos(new Vector2(pos.X - (float)TextBlock.DesiredSize.Width, pos.Y), TextBlock);
+            var reversePos = GetReversePos(point);
+            mPolyLine.Points.Add(new Point(reversePos.X, reversePos.Y));
+        }
+
+        public void ChangePointPosition(int pointIndex, Vector2 newPos)
+        {
+            var reversePos = GetReversePos(newPos);
+            mPolyLine.Points[pointIndex] = new Point(reversePos.X, reversePos.Y);
         }
     }
     public class GraphLabelImpl : CanvasChildImpl, IGraphLabelDrawer
