@@ -238,7 +238,22 @@ namespace RICHY_DevTool.View.Widgets
         OxOy = 1
     }
 
-    public abstract class BaseCanvasChild : ICanvasChild
+    public abstract class BaseWpfCanvasElement
+    {
+        protected abstract float CanvasHeight { get; }
+
+        protected Vector2 GetElementReversePos(Vector2 originalPos)
+        {
+            return new Vector2(originalPos.X, CanvasHeight - originalPos.Y);
+        }
+
+        protected Vector2 GetContainerReversePos(Vector2 originalPos)
+        {
+            return new Vector2(originalPos.X, -originalPos.Y);
+        }
+    }
+
+    public abstract class BaseCanvasChild : BaseWpfCanvasElement, ICanvasChild
     {
         protected Canvas ParentsCanvas { get; private set; }
         public abstract UIElement Child { get; }
@@ -248,19 +263,14 @@ namespace RICHY_DevTool.View.Widgets
             ParentsCanvas = container;
         }
 
-        protected float CanvasHeight
+        protected override float CanvasHeight
         {
             get
             {
                 return (float)ParentsCanvas.ActualHeight;
             }
         }
-
-        protected Vector2 GetReversePos(Vector2 originalPos)
-        {
-            return new Vector2(originalPos.X, CanvasHeight - originalPos.Y);
-        }
-
+       
         public abstract void SetUpVisual(GraphElement targetElement);
 
     }
@@ -284,7 +294,7 @@ namespace RICHY_DevTool.View.Widgets
 
         protected void SetReversePos(Vector2 position, UIElement element)
         {
-            var reversePos = GetReversePos(position);
+            var reversePos = GetElementReversePos(position);
             Canvas.SetLeft(element, reversePos.X);
             Canvas.SetTop(element, reversePos.Y);
         }
@@ -318,8 +328,8 @@ namespace RICHY_DevTool.View.Widgets
 
         public void SetPositionOnCanvas(Vector2 firstPoint, Vector2 secondPoint)
         {
-            var reverse1stPos = GetReversePos(firstPoint);
-            var reverse2ndPos = GetReversePos(secondPoint);
+            var reverse1stPos = GetElementReversePos(firstPoint);
+            var reverse2ndPos = GetElementReversePos(secondPoint);
             mLine.X1 = reverse1stPos.X;
             mLine.Y1 = reverse1stPos.Y;
             mLine.X2 = reverse2ndPos.X;
@@ -357,13 +367,21 @@ namespace RICHY_DevTool.View.Widgets
         }
 
     }
-    public class CanvasHolderImpl : ICanvasHolder
+    public class CanvasHolderImpl : BaseWpfCanvasElement, ICanvasHolder
     {
         private Canvas mContainerCanvas;
+        protected override float CanvasHeight
+        {
+            get
+            {
+                return (float)mContainerCanvas.ActualHeight;
+            }
+        }
         public CanvasHolderImpl(Canvas canvasHolder)
         {
             mContainerCanvas = canvasHolder;
         }
+        
 
         public bool AddChild(ICanvasChild child)
         {
@@ -408,8 +426,9 @@ namespace RICHY_DevTool.View.Widgets
 
         public void SetCanvasPosition(Vector2 position)
         {
-            Canvas.SetLeft(mContainerCanvas, position.X);
-            Canvas.SetTop(mContainerCanvas, position.Y);
+            var reversePos = GetContainerReversePos(position);
+            Canvas.SetLeft(mContainerCanvas, reversePos.X);
+            Canvas.SetTop(mContainerCanvas, reversePos.Y);
         }
 
     }
@@ -469,7 +488,7 @@ namespace RICHY_DevTool.View.Widgets
 
         public int AddNewPoint(Vector2 point, bool toLast = true)
         {
-            var reversePos = GetReversePos(point);
+            var reversePos = GetElementReversePos(point);
             if (toLast)
             {
                 mPolyLine.Points.Add(new Point(reversePos.X, reversePos.Y));
@@ -485,8 +504,8 @@ namespace RICHY_DevTool.View.Widgets
 
         public void ChangePointPosition(Vector2 oldPos, Vector2 newPos)
         {
-            var reverseNewPos = GetReversePos(newPos);
-            var reverseOldPos = GetReversePos(oldPos);
+            var reverseNewPos = GetElementReversePos(newPos);
+            var reverseOldPos = GetElementReversePos(oldPos);
             var oldPoint = new Point(reverseOldPos.X, reverseOldPos.Y);
             var newPoint = new Point(reverseNewPos.X, reverseNewPos.Y);
             var oldPointIndex = mPolyLine.Points.IndexOf(oldPoint);
@@ -500,7 +519,7 @@ namespace RICHY_DevTool.View.Widgets
 
         public void RemovePoint(Vector2 point)
         {
-            var reversePos = GetReversePos(point);
+            var reversePos = GetElementReversePos(point);
             mPolyLine.Points.Remove(new Point(reversePos.X, reversePos.Y));
         }
     }
