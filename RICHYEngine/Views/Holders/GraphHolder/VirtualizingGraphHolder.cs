@@ -6,9 +6,9 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine.PlayerLoop;
-using static RICHYEngine.Views.Holders.ICanvasChild;
+using static RICHYEngine.Views.Holders.GraphHolder.ICanvasChild;
 
-namespace RICHYEngine.Views.Holders
+namespace RICHYEngine.Views.Holders.GraphHolder
 {
     public class VirtualizingGraphHolder : GraphHolder
     {
