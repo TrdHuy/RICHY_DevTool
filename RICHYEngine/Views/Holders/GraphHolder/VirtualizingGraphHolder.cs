@@ -40,15 +40,15 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             base.ShowGraph(valueList);
         }
 
-        //public override void ChangeYMax(float newYMax)
-        //{
-        //    if (yMax != newYMax)
-        //    {
-        //        yMax = newYMax;
-        //        RearrangePointAndConnection(DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, yMax, mGraphContainer.GraphHeight);
-        //        InvalidateLabelY(mGraphContainer.GraphHeight, dashDistanceY);
-        //    }
-        //}
+        public override void ChangeYMax(float newYMax)
+        {
+            if (yMax != newYMax)
+            {
+                yMax = newYMax;
+                RearrangePointAndConnection();
+                InvalidateLabelY(mGraphContainer.GraphHeight, dashDistanceY);
+            }
+        }
 
         ////public void ChangeZoomX(float offset)
         ////{
@@ -83,26 +83,23 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         //    }
         //}
 
-        //private void RearrangePointAndConnection(float displayOffsetX,
-        //    float displayOffsetY,
-        //    float yMax,
-        //    float graphHeight)
-        //{
-        //    for (int i = 0; i < elementCache.pointDrawers.Count; i++)
-        //    {
-        //        var labelX = elementCache.labelXDrawers[i];
-        //        float xPos = i * xPointDistance + displayOffsetX;
-        //        labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos + mPointCanvasHolderLeft, -10 + displayOffsetY));
+        private void RearrangePointAndConnection()
+        {
+            for (int i = 0; i < elementCache.pointDrawers.Count; i++)
+            {
+                var labelX = elementCache.labelXDrawers[i];
+                float xPos = GetXPosBaseOnPointIndex(i);
+                labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos,0));
 
-        //        float yPos = (mCurrentShowingValueList![i].YValue / yMax) * graphHeight + DISPLAY_OFFSET_Y;
-        //        var point = elementCache.pointDrawers[i];
-        //        var oldPointPos = point.GetPositionOnCanvas();
-        //        var newPointPos = new Vector2(xPos, yPos);
-        //        point.SetPositionOnCanvas(GraphElement.Point, newPointPos);
-        //        if (i >= mCurrentStartIndex && i <= mCurrentEndIndex)
-        //            elementCache.lineConnectionDrawer!.ChangePointPosition(oldPointPos, newPointPos);
-        //    }
-        //}
+                float yPos = GetYPosBaseOnValue(mCurrentShowingValueList![i]);
+                var point = elementCache.pointDrawers[i];
+                var oldPointPos = point.GetPositionOnCanvas();
+                var newPointPos = new Vector2(xPos, yPos);
+                point.SetPositionOnCanvas(GraphElement.Point, newPointPos);
+                if (CheckIndexIsVisible(i))
+                    elementCache.lineConnectionDrawer!.ChangePointPosition(oldPointPos, newPointPos);
+            }
+        }
 
         private void UpdateDisplayingIndex()
         {
@@ -222,6 +219,10 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
         }
 
+        private bool CheckIndexIsVisible(int indexNeedToCheck)
+        {
+            return indexNeedToCheck >= mCurrentStartIndex && indexNeedToCheck <= mCurrentEndIndex;
+        }
         ////protected override void GeneratePointConnection(Vector2 posA, Vector2 posB, int lineIndex)
         ////{
         ////    if (lineIndex >= mCurrentStartIndex && lineIndex <= mCurrentEndIndex)

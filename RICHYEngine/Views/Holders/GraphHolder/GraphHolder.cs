@@ -173,7 +173,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 {
                     labelY.SetUpVisual(GraphElement.LabelY);
                     labelY.SetText((yMax * (normalizedValue + offset)).ToString("F2"));
-                    labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(-20 + displayOffsetX, yPos + displayOffsetY));
+                    labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(0, yPos + displayOffsetY));
                     elementCache.labelYDrawers.Add(labelY);
                 }
 
@@ -293,12 +293,22 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             return point;
         }
 
+        /// <summary>
+        /// To get X coordinate base on point index, used for label of X axis and point
+        /// </summary>
+        /// <param name="pointIndexOnGraph"></param>
+        /// <returns></returns>
         protected float GetXPosBaseOnPointIndex(int pointIndexOnGraph)
         {
             float xPos = pointIndexOnGraph * xPointDistance + DISPLAY_OFFSET_X;
             return xPos;
         }
 
+        /// <summary>
+        /// To get Y coordinate base on point value, used for label of Y axis and point
+        /// </summary>
+        /// <param name="pointIndexOnGraph"></param>
+        /// <returns></returns>
         protected float GetYPosBaseOnValue(IGraphPointValue pointValue)
         {
             float yPos = pointValue.YValue / yMax * mGraphContainer.GraphHeight + DISPLAY_OFFSET_Y;
@@ -312,7 +322,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         protected float GetLabelXCanvasPosY()
         {
-            return -10 + DISPLAY_OFFSET_Y;
+            return 10;
         }
     }
 }

@@ -15,13 +15,13 @@ namespace RICHY_DevTool.View.Widgets
     /// </summary>
     public partial class RichyGraph : UserControl
     {
-        private VirtualizingGraphHolder graphHolder;
+        private GraphHolder graphHolder;
 
         public RichyGraph()
         {
             InitializeComponent();
             var pointSize = new Vector2(8, 8);
-            graphHolder = new VirtualizingGraphHolder(
+            graphHolder = new GraphHolder(
                graphContainer: new GraphContainerImpl(MainContainerCanvas,
                     mPointContainerCanvas: PointAndLineContainerCanvas,
                     mLabelXCanvas: LabelXContainerCanvas,
