@@ -21,7 +21,7 @@ namespace RICHY_DevTool.View.Widgets
         {
             InitializeComponent();
             var pointSize = new Vector2(8, 8);
-            graphHolder = new GraphHolder(
+            graphHolder = new VirtualizingGraphHolder(
                graphContainer: new GraphContainerImpl(MainContainerCanvas,
                     mPointContainerCanvas: PointAndLineContainerCanvas,
                     mLabelXCanvas: LabelXContainerCanvas,
@@ -146,23 +146,23 @@ namespace RICHY_DevTool.View.Widgets
 
         private void showGraph()
         {
-            var listValue = new List<IGraphPointValue>() { CreateValue(32,0),
-                CreateValue(42,1) ,
-                CreateValue(53,2) ,
-                CreateValue(12,3) ,
-                CreateValue(64,4) ,
-                CreateValue(63,5) ,
-                CreateValue(87,6) ,
-                CreateValue(130,7) ,
-                CreateValue(14,8) ,
-                CreateValue(52,9) ,
-                CreateValue(53,10) ,
-                CreateValue(54,11) ,
-                CreateValue(55,12) ,
-                CreateValue(56,13) ,
-                CreateValue(57,14) ,
-                CreateValue(53,15) ,
-                CreateValue(64,16) };
+            var listValue = new List<IGraphPointValue>() { CreateValue(0,0),
+                CreateValue(5,1) ,
+                CreateValue(10,2) ,
+                CreateValue(20,3) ,
+                CreateValue(25,4) ,
+                CreateValue(30,5) ,
+                CreateValue(35,6) ,
+                //CreateValue(130,7) ,
+                //CreateValue(14,8) ,
+                //CreateValue(52,9) ,
+                //CreateValue(53,10) ,
+                //CreateValue(54,11) ,
+                //CreateValue(55,12) ,
+                //CreateValue(56,13) ,
+                //CreateValue(57,14) ,
+                //CreateValue(53,15) ,
+                CreateValue(40,16) };
             graphHolder.ShowGraph(listValue);
         }
 
@@ -196,11 +196,11 @@ namespace RICHY_DevTool.View.Widgets
             }
             else if (sender == UpBut)
             {
-                graphHolder.MoveGraph(0, -10);
+                graphHolder.MoveGraph(0, 10);
             }
             else if (sender == DownBut)
             {
-                graphHolder.MoveGraph(0, 10);
+                graphHolder.MoveGraph(0, -10);
             }
             else if (sender == AddNewValueBut)
             {
@@ -229,7 +229,6 @@ namespace RICHY_DevTool.View.Widgets
         }
 
     }
-
     public enum GraphZIndex
     {
         Line = 99,
@@ -237,8 +236,21 @@ namespace RICHY_DevTool.View.Widgets
         LineDash = 0,
         OxOy = 1
     }
+    public abstract class BaseWpfCanvasElement
+    {
+        protected abstract float MainContainerCanvasHeight { get; }
 
-    public abstract class BaseCanvasChild : ICanvasChild
+        protected Vector2 GetReversePosForPoint(Vector2 originalPos)
+        {
+            return new Vector2(originalPos.X, MainContainerCanvasHeight - originalPos.Y);
+        }
+
+        protected Vector2 GetReversePosForCanvasHolder(Canvas canvasHolder, Vector2 originalPos)
+        {
+            return new Vector2(originalPos.X, MainContainerCanvasHeight - originalPos.Y - (float)canvasHolder.ActualHeight);
+        }
+    }
+    public abstract class BaseCanvasChild : BaseWpfCanvasElement, ICanvasChild
     {
         protected Canvas ParentsCanvas { get; private set; }
         public abstract UIElement Child { get; }
@@ -248,7 +260,7 @@ namespace RICHY_DevTool.View.Widgets
             ParentsCanvas = container;
         }
 
-        protected float CanvasHeight
+        protected override float MainContainerCanvasHeight
         {
             get
             {
@@ -256,13 +268,7 @@ namespace RICHY_DevTool.View.Widgets
             }
         }
 
-        protected Vector2 GetReversePos(Vector2 originalPos)
-        {
-            return new Vector2(originalPos.X, CanvasHeight - originalPos.Y);
-        }
-
         public abstract void SetUpVisual(GraphElement targetElement);
-
     }
 
     public abstract class SingleElementImpl : BaseCanvasChild, ISingleCanvasElement
@@ -284,12 +290,11 @@ namespace RICHY_DevTool.View.Widgets
 
         protected void SetReversePos(Vector2 position, UIElement element)
         {
-            var reversePos = GetReversePos(position);
+            var reversePos = GetReversePosForPoint(position);
             Canvas.SetLeft(element, reversePos.X);
             Canvas.SetTop(element, reversePos.Y);
         }
     }
-
     public class GraphLineImpl : BaseCanvasChild, IGraphLineDrawer
     {
         private Line mLine;
@@ -318,15 +323,14 @@ namespace RICHY_DevTool.View.Widgets
 
         public void SetPositionOnCanvas(Vector2 firstPoint, Vector2 secondPoint)
         {
-            var reverse1stPos = GetReversePos(firstPoint);
-            var reverse2ndPos = GetReversePos(secondPoint);
+            var reverse1stPos = GetReversePosForPoint(firstPoint);
+            var reverse2ndPos = GetReversePosForPoint(secondPoint);
             mLine.X1 = reverse1stPos.X;
             mLine.Y1 = reverse1stPos.Y;
             mLine.X2 = reverse2ndPos.X;
             mLine.Y2 = reverse2ndPos.Y;
         }
     }
-
     public class GraphPointImpl : SingleElementImpl, IGraphPointDrawer
     {
         private Ellipse mPoint;
@@ -357,22 +361,26 @@ namespace RICHY_DevTool.View.Widgets
         }
 
     }
-    public class CanvasHolderImpl : ICanvasHolder
+    public class CanvasHolderImpl : BaseWpfCanvasElement, ICanvasHolder
     {
-        private Canvas mContainerCanvas;
-        public CanvasHolderImpl(Canvas canvasHolder)
+        private Canvas mChildCanvas;
+        private Canvas mParentsCanvas;
+        public CanvasHolderImpl(Canvas canvasHolder, Canvas mainContainerCanvas)
         {
-            mContainerCanvas = canvasHolder;
+            mChildCanvas = canvasHolder;
+            mParentsCanvas = mainContainerCanvas;
         }
+
+        protected override float MainContainerCanvasHeight => (float)mParentsCanvas.ActualHeight;
 
         public bool AddChild(ICanvasChild child)
         {
             var cast = child as BaseCanvasChild;
             if (cast != null)
             {
-                if (!mContainerCanvas.Children.Contains(cast.Child))
+                if (!mChildCanvas.Children.Contains(cast.Child))
                 {
-                    mContainerCanvas.Children.Add(cast.Child);
+                    mChildCanvas.Children.Add(cast.Child);
                     return true;
                 }
                 return false;
@@ -385,7 +393,7 @@ namespace RICHY_DevTool.View.Widgets
 
         public void Clear()
         {
-            mContainerCanvas.Children.Clear();
+            mChildCanvas.Children.Clear();
         }
 
         public bool RemoveChild(ICanvasChild child)
@@ -393,9 +401,9 @@ namespace RICHY_DevTool.View.Widgets
             var cast = child as BaseCanvasChild;
             if (cast != null)
             {
-                if (mContainerCanvas.Children.Contains(cast.Child))
+                if (mChildCanvas.Children.Contains(cast.Child))
                 {
-                    mContainerCanvas.Children.Remove(cast.Child);
+                    mChildCanvas.Children.Remove(cast.Child);
                     return true;
                 }
                 return false;
@@ -408,8 +416,9 @@ namespace RICHY_DevTool.View.Widgets
 
         public void SetCanvasPosition(Vector2 position)
         {
-            Canvas.SetLeft(mContainerCanvas, position.X);
-            Canvas.SetTop(mContainerCanvas, position.Y);
+            var reversePos = GetReversePosForCanvasHolder(mChildCanvas, position);
+            Canvas.SetLeft(mChildCanvas, reversePos.X);
+            Canvas.SetTop(mChildCanvas, reversePos.Y);
         }
 
     }
@@ -430,11 +439,11 @@ namespace RICHY_DevTool.View.Widgets
             Canvas mGridDashCanvas)
         {
             this.mContainerCanvas = mContainerCanvas;
-            mPointContainerCanvasHolder = new CanvasHolderImpl(mPointContainerCanvas);
-            mLabelXCanvasHolder = new CanvasHolderImpl(mLabelXCanvas);
-            mLabelYCanvasHolder = new CanvasHolderImpl(mLabelYCanvas);
-            mAxisCanvasHolder = new CanvasHolderImpl(mAxisCanvas);
-            mGridDashCanvasHolder = new CanvasHolderImpl(mGridDashCanvas);
+            mPointContainerCanvasHolder = new CanvasHolderImpl(mPointContainerCanvas, mContainerCanvas);
+            mLabelXCanvasHolder = new CanvasHolderImpl(mLabelXCanvas, mContainerCanvas);
+            mLabelYCanvasHolder = new CanvasHolderImpl(mLabelYCanvas, mContainerCanvas);
+            mAxisCanvasHolder = new CanvasHolderImpl(mAxisCanvas, mContainerCanvas);
+            mGridDashCanvasHolder = new CanvasHolderImpl(mGridDashCanvas, mContainerCanvas);
         }
 
         public float GraphHeight => (float)mContainerCanvas.ActualHeight;
@@ -451,7 +460,6 @@ namespace RICHY_DevTool.View.Widgets
 
         public ICanvasHolder GridDashCanvasHolder => mGridDashCanvasHolder;
     }
-
     public class GraphPolyLineImpl : BaseCanvasChild, IGraphPolyLineDrawer
     {
         public override UIElement Child => mPolyLine;
@@ -469,7 +477,7 @@ namespace RICHY_DevTool.View.Widgets
 
         public int AddNewPoint(Vector2 point, bool toLast = true)
         {
-            var reversePos = GetReversePos(point);
+            var reversePos = GetReversePosForPoint(point);
             if (toLast)
             {
                 mPolyLine.Points.Add(new Point(reversePos.X, reversePos.Y));
@@ -485,8 +493,8 @@ namespace RICHY_DevTool.View.Widgets
 
         public void ChangePointPosition(Vector2 oldPos, Vector2 newPos)
         {
-            var reverseNewPos = GetReversePos(newPos);
-            var reverseOldPos = GetReversePos(oldPos);
+            var reverseNewPos = GetReversePosForPoint(newPos);
+            var reverseOldPos = GetReversePosForPoint(oldPos);
             var oldPoint = new Point(reverseOldPos.X, reverseOldPos.Y);
             var newPoint = new Point(reverseNewPos.X, reverseNewPos.Y);
             var oldPointIndex = mPolyLine.Points.IndexOf(oldPoint);
@@ -500,7 +508,7 @@ namespace RICHY_DevTool.View.Widgets
 
         public void RemovePoint(Vector2 point)
         {
-            var reversePos = GetReversePos(point);
+            var reversePos = GetReversePosForPoint(point);
             mPolyLine.Points.Remove(new Point(reversePos.X, reversePos.Y));
         }
     }

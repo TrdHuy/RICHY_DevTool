@@ -8,7 +8,7 @@
 			 Loaded="UserControl_Loaded"
 			 d:DesignWidth="800">
 
-	<Grid Background="Wheat">
+	<Grid Background="#202020">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="10" />

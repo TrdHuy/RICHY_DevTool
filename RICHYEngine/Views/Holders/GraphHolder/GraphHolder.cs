@@ -59,7 +59,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         public float GetYValueAtMouse(Vector2 mousePos)
         {
             var rate = yMax / mGraphContainer.GraphHeight;
-            return (-DISPLAY_OFFSET_Y + mousePos.Y + mPointCanvasHolderTop) * rate;
+            return (-DISPLAY_OFFSET_Y + mousePos.Y - mPointCanvasHolderTop) * rate;
         }
 
         public virtual int AddPointValue(IGraphPointValue newValue)
@@ -93,7 +93,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         {
             mPointCanvasHolderLeft += offsetLeft;
             mPointCanvasHolderTop += offsetTop;
-            mGraphContainer.PointAndLineCanvasHolder.SetCanvasPosition(new Vector2(mPointCanvasHolderLeft, mPointCanvasHolderTop));
+            mGraphContainer.PointAndLineCanvasHolder.SetCanvasPosition(new Vector2(GetLPointCanvasPosX(), GetLPointCanvasPosY()));
             mGraphContainer.LabelXCanvasHolder.SetCanvasPosition(new Vector2(GetLabelXCanvasPosX(), GetLabelXCanvasPosY()));
             if (offsetTop != 0)
             {
@@ -132,6 +132,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             mCurrentShowingValueList = valueList;
             mGraphContainer.Clear();
             elementCache.Clear();
+            mGraphContainer.PointAndLineCanvasHolder.SetCanvasPosition(new Vector2(GetLPointCanvasPosX(), GetLPointCanvasPosY()));
 
             float graphHeight = mGraphContainer.GraphHeight;
             float graphWidth = mGraphContainer.GraphWidth;
@@ -163,17 +164,18 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         private void SetUpLabelY(float graphHeight, float dashYDistance, float displayOffsetX, float displayOffsetY)
         {
+            mGraphContainer.LabelYCanvasHolder.SetCanvasPosition(new Vector2(GetLabelYCanvasPosX(), GetLabelYCanvasPosY()));
             for (int i = 0; i < graphHeight / dashYDistance; i++)
             {
                 var labelY = mGraphLabelGenerator.Invoke(GraphElement.LabelY);
                 var normalizedValue = i * dashYDistance / graphHeight;
                 var offset = mPointCanvasHolderTop / graphHeight;
-                float yPos = i * dashYDistance;
+                float yPos = GetLabelYPosYBaseOnIndex(i);
                 if (mGraphContainer.LabelYCanvasHolder.AddChild(labelY))
                 {
                     labelY.SetUpVisual(GraphElement.LabelY);
                     labelY.SetText((yMax * (normalizedValue + offset)).ToString("F2"));
-                    labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(0, yPos + displayOffsetY));
+                    labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(GetLabelYPosX(), yPos));
                     elementCache.labelYDrawers.Add(labelY);
                 }
 
@@ -184,8 +186,8 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         {
             for (int i = 0; i < elementCache.labelYDrawers.Count; i++)
             {
-                float yPos = i * dashYDistance + DISPLAY_OFFSET_Y;
-                var offset = mPointCanvasHolderTop / graphHeight;
+                float yPos = GetLabelYPosYBaseOnIndex(i);
+                var offset = -mPointCanvasHolderTop / graphHeight;
                 var normalizedValue = i * dashYDistance / graphHeight;
                 var labelY = elementCache.labelYDrawers[i];
                 labelY.SetText((yMax * (normalizedValue + offset)).ToString("F2"));
@@ -300,7 +302,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         /// <returns></returns>
         protected float GetXPosBaseOnPointIndex(int pointIndexOnGraph)
         {
-            float xPos = pointIndexOnGraph * xPointDistance + DISPLAY_OFFSET_X;
+            float xPos = pointIndexOnGraph * xPointDistance;
             return xPos;
         }
 
@@ -311,18 +313,46 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         /// <returns></returns>
         protected float GetYPosBaseOnValue(IGraphPointValue pointValue)
         {
-            float yPos = pointValue.YValue / yMax * mGraphContainer.GraphHeight + DISPLAY_OFFSET_Y;
+            float yPos = pointValue.YValue / yMax * mGraphContainer.GraphHeight;
             return yPos;
+        }
+
+        protected float GetLPointCanvasPosX()
+        {
+            return mPointCanvasHolderLeft + DISPLAY_OFFSET_X;
+        }
+
+        protected float GetLPointCanvasPosY()
+        {
+            return mPointCanvasHolderTop + DISPLAY_OFFSET_Y;
         }
 
         protected float GetLabelXCanvasPosX()
         {
-            return mPointCanvasHolderLeft;
+            return mPointCanvasHolderLeft + DISPLAY_OFFSET_X;
         }
 
         protected float GetLabelXCanvasPosY()
         {
-            return 10;
+            return DISPLAY_OFFSET_Y - 10;
+        }
+
+        protected float GetLabelYCanvasPosX()
+        {
+            return DISPLAY_OFFSET_X - 10;
+        }
+
+        protected float GetLabelYCanvasPosY()
+        {
+            return DISPLAY_OFFSET_Y;
+        }
+        protected float GetLabelYPosX()
+        {
+            return 0;
+        }
+        protected float GetLabelYPosYBaseOnIndex(int index)
+        {
+            return index * dashDistanceY;
         }
     }
 }
