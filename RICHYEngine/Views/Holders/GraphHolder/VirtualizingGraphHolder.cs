@@ -30,7 +30,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         public override void MoveGraph(int offsetLeft, int offsetTop)
         {
             base.MoveGraph(offsetLeft, offsetTop);
-            UpdateDisplayingIndex();
+            UpdateDisplayRangeAndModifyElements();
         }
 
         public override void ShowGraph(List<IGraphPointValue> valueList)
@@ -72,16 +72,16 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         ////        }
         ////    }
         ////}
-        //public override void ChangeXDistance(float distance)
-        //{
-        //    var newDistance = distance < X_POINT_DISTANCE_MIN ? X_POINT_DISTANCE_MIN : distance;
-        //    if (mCurrentShowingValueList != null && xPointDistance != newDistance)
-        //    {
-        //        xPointDistance = newDistance;
-        //        RearrangePointAndConnection(DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, yMax, mGraphContainer.GraphHeight);
-        //        UpdateDisplayingIndex();
-        //    }
-        //}
+        public override void ChangeXDistance(float distance)
+        {
+            var newDistance = distance < X_POINT_DISTANCE_MIN ? X_POINT_DISTANCE_MIN : distance;
+            if (mCurrentShowingValueList != null && xPointDistance != newDistance)
+            {
+                xPointDistance = newDistance;
+                UpdateDisplayRangeAndModifyElements();
+                RearrangePointAndConnection();
+            }
+        }
 
         private void RearrangePointAndConnection()
         {
@@ -89,7 +89,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 var labelX = elementCache.labelXDrawers[i];
                 float xPos = GetXPosBaseOnPointIndex(i);
-                labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos,0));
+                labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
 
                 float yPos = GetYPosBaseOnValue(mCurrentShowingValueList![i]);
                 var point = elementCache.pointDrawers[i];
@@ -101,10 +101,11 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
         }
 
-        private void UpdateDisplayingIndex()
+        private void UpdateDisplayRangeAndModifyElements()
         {
             var newStartIndex = GetStartPointIndex();
             var newEndIndex = GetEndPointIndex();
+            var totalPointCount = elementCache.pointDrawers.Count;
             if (mCurrentStartIndex < newStartIndex)
             {
                 for (int i = mCurrentStartIndex; i < newStartIndex; i++)
@@ -144,7 +145,8 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
             else if (mCurrentEndIndex > newEndIndex)
             {
-                for (int i = mCurrentEndIndex; i > newEndIndex && i < elementCache.pointDrawers.Count; i--)
+                var deleteFromIndex = mCurrentEndIndex < totalPointCount ? mCurrentEndIndex : totalPointCount - 1;
+                for (int i = deleteFromIndex; i > newEndIndex && i < elementCache.pointDrawers.Count; i--)
                 {
                     mGraphContainer.PointAndLineCanvasHolder.RemoveChild(elementCache.pointDrawers[i]);
                     mGraphContainer.LabelXCanvasHolder.RemoveChild(elementCache.labelXDrawers[i]);
