@@ -274,7 +274,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
 
 
-        protected virtual void GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer, bool toLast = true)
+        protected virtual IGraphPointDrawer GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer, bool toLast = true)
         {
             //TODO: Current support to add new point at last index only
             //Debug.Assert(elementCache.pointDrawers.Count == pointIndex);
@@ -298,6 +298,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 }
                 graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos), toLast);
             }
+            return point;
         }
 
         /// <summary>
