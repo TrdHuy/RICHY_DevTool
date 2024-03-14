@@ -5,6 +5,13 @@ using System.Numerics;
 
 namespace RICHYEngine.Views.Holders.GraphHolder
 {
+    internal static class HolderExtension
+    {
+        public static void AddChildInternal(this ICanvasHolder holder, ICanvasChild child)
+        {
+            holder.AddChild(child);
+        }
+    }
     public class GraphHolder
     {
         protected class GraphElementCache
@@ -99,12 +106,6 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 InvalidateLabelY(mGraphContainer.GraphHeight, dashDistanceY);
             }
-
-
-            if (offsetLeft != 0)
-            {
-                InvalidateLabelX(xPointDistance);
-            }
         }
 
         public virtual void ChangeYMax(float offset)
@@ -186,25 +187,15 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         {
             for (int i = 0; i < elementCache.labelYDrawers.Count; i++)
             {
-                float yPos = GetPosYForLabelY(i);
                 var offset = -mPointCanvasHolderTop / graphHeight;
                 var normalizedValue = i * dashYDistance / graphHeight;
                 var labelY = elementCache.labelYDrawers[i];
                 labelY.SetText((yMax * (normalizedValue + offset)).ToString("F2"));
-                labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(0, yPos));
             }
         }
 
-        private void InvalidateLabelX(float xPointDistance)
-        {
-            for (int i = 0; i < elementCache.labelXDrawers.Count; i++)
-            {
-                float xPos = GetXPosForPointBaseOnPointIndex(i);
-                var labelX = elementCache.labelXDrawers[i];
-                labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
-            }
-        }
-        private void SetupPointNConnectionNLabelX(List<IGraphPointValue> showingList,
+
+        protected virtual void SetupPointNConnectionNLabelX(List<IGraphPointValue> showingList,
             float graphHeight,
             float displayOffsetY,
             float displayOffsetX)
@@ -228,7 +219,8 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         protected virtual IGraphLabelDrawer GenerateLabelX(IGraphPointValue pointValue,
             float displayOffsetY,
             float displayOffsetX,
-            int pointIndex)
+            int pointIndex,
+            bool toLast = true)
         {
             var labelX = mGraphLabelGenerator.Invoke(GraphElement.LabelX);
             if (mGraphContainer.LabelXCanvasHolder.AddChild(labelX))
@@ -237,7 +229,14 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 labelX.SetUpVisual(GraphElement.LabelX);
                 labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
                 labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
-                elementCache.labelXDrawers.Add(labelX);
+                if (toLast)
+                {
+                    elementCache.labelXDrawers.Add(labelX);
+                }
+                else
+                {
+                    elementCache.labelXDrawers.Insert(0, labelX);
+                }
             }
             return labelX;
         }
@@ -275,14 +274,13 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
 
 
-        protected virtual IGraphPointDrawer GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer)
+        protected virtual void GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer, bool toLast = true)
         {
             //TODO: Current support to add new point at last index only
-            Debug.Assert(elementCache.pointDrawers.Count == pointIndex);
+            //Debug.Assert(elementCache.pointDrawers.Count == pointIndex);
 
             float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
             float yPos = GetYPosForPointBaseOnValue(graphPointValue);
-            var indexOnGraph = graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos));
             IGraphPointDrawer point = mGraphPointGenerator.Invoke(GraphElement.Point);
             point.graphPointValue = graphPointValue;
 
@@ -290,9 +288,16 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 point.SetUpVisual(GraphElement.Point);
                 point.SetPositionOnCanvas(GraphElement.Point, new Vector2(xPos, yPos));
-                elementCache.pointDrawers.Add(point);
+                if (toLast)
+                {
+                    elementCache.pointDrawers.Add(point);
+                }
+                else
+                {
+                    elementCache.pointDrawers.Insert(0, point);
+                }
+                graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos), toLast);
             }
-            return point;
         }
 
         /// <summary>
