@@ -146,23 +146,25 @@ namespace RICHY_DevTool.View.Widgets
 
         private void showGraph()
         {
-            var listValue = new List<IGraphPointValue>() { CreateValue(0,0),
+            var listValue = new List<IGraphPointValue>() {
+                CreateValue(0,0),
                 CreateValue(5,1) ,
                 CreateValue(10,2) ,
                 CreateValue(20,3) ,
                 CreateValue(25,4) ,
                 CreateValue(30,5) ,
                 CreateValue(35,6) ,
-                //CreateValue(130,7) ,
-                //CreateValue(14,8) ,
-                //CreateValue(52,9) ,
-                //CreateValue(53,10) ,
-                //CreateValue(54,11) ,
-                //CreateValue(55,12) ,
-                //CreateValue(56,13) ,
-                //CreateValue(57,14) ,
-                //CreateValue(53,15) ,
-                CreateValue(40,16) };
+                CreateValue(40,7) ,
+                CreateValue(45,8) ,
+                CreateValue(50,9) ,
+                CreateValue(55,10) ,
+                CreateValue(60,11) ,
+                CreateValue(65,12) ,
+                CreateValue(70,13) ,
+                CreateValue(75,14) ,
+                CreateValue(80,15) ,
+               // CreateValue(40,16) 
+            };
             graphHolder.ShowGraph(listValue);
         }
 
@@ -463,6 +465,9 @@ namespace RICHY_DevTool.View.Widgets
     public class GraphPolyLineImpl : BaseCanvasChild, IGraphPolyLineDrawer
     {
         public override UIElement Child => mPolyLine;
+
+        public object Drawer => mPolyLine.Points;
+
         private Polyline mPolyLine;
 
         public GraphPolyLineImpl(Canvas container, Polyline polyLine) : base(container)
