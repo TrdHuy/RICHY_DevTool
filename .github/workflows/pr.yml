@@ -15,9 +15,9 @@ jobs:
     runs-on: windows-latest
     env:
       ISLOCAL: false
-      TOKEN:  ${{ secrets.WORK_FLOW_ACCESS_TOKEN_CLASSIC }}
-      REPO: ${{ github.event.repository.name }}
-      OWNER: ${{ github.repository_owner }}
+      GITHUB_TOKEN:  ${{ secrets.WORK_FLOW_ACCESS_TOKEN_CLASSIC }}
+      REPO_NAME: ${{ github.event.repository.name }}
+      REPO_OWNER: ${{ github.repository_owner }}
       PR_MESSAGE: ${{ github.event.pull_request.title }}
     
     steps:
