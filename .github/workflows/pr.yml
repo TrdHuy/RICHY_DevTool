@@ -11,7 +11,7 @@ on:
       - '*'
 jobs:
   check_pr_message:
-    name: Check PR message
+    name: Execute PR rules 
     runs-on: windows-latest
     env:
       ISLOCAL: false
@@ -31,7 +31,7 @@ jobs:
           dotnet-version: 7.0.x
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.1
-      - name: Build, create release, publish to nuget github
+      - name: PR message check, Execute unit test
         shell: pwsh
         run: |
           $result = & .\pr.ps1
