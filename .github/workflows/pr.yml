@@ -1,0 +1,38 @@
+name: Pull request check
+
+on:      
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+    branches:
+      - '*'
+jobs:
+  check_pr_message:
+    name: Execute PR rules 
+    runs-on: windows-latest
+    env:
+      ISLOCAL: false
+      GITHUB_TOKEN:  ${{ secrets.WORK_FLOW_ACCESS_TOKEN_CLASSIC }}
+      REPO_NAME: ${{ github.event.repository.name }}
+      REPO_OWNER: ${{ github.repository_owner }}
+      PR_MESSAGE: ${{ github.event.pull_request.title }}
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with: 
+         fetch-depth: 0
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+      - name: PR message check, Execute unit test
+        shell: pwsh
+        run: |
+          $result = & .\pr.ps1
+          echo result=$result
