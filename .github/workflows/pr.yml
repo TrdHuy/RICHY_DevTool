@@ -16,9 +16,23 @@ jobs:
     steps:
       - name: Check message rule
         env:
-            GIT_CONTEXT: ${{ toJson(github) }}
-            PR_INFO_API: ${{ github.event.pull_request._links.self.href }}
-            PR_TITLE: ${{ github.event.pull_request.title }}
+            ISLOCAL: false
+            TOKEN:  ${{ secrets.WORK_FLOW_ACCESS_TOKEN_CLASSIC }}
+            REPO: ${{ github.event.repository.name }}
+            OWNER: ${{ github.repository_owner }}
+            PR_MESSAGE: ${{ github.event.pull_request.title }}
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with: 
+         fetch-depth: 0
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+      - name: Build, create release, publish to nuget github
+        shell: pwsh
         run: |
-          echo "$GIT_CONTEXT"
-          echo "$PR_TITLE"
+          $result = & .\pr.ps1
+          echo result=$result
