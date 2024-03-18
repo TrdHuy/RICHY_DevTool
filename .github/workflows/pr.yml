@@ -13,14 +13,14 @@ jobs:
   check_pr_message:
     name: Check PR message
     runs-on: windows-latest
+    env:
+      ISLOCAL: false
+      TOKEN:  ${{ secrets.WORK_FLOW_ACCESS_TOKEN_CLASSIC }}
+      REPO: ${{ github.event.repository.name }}
+      OWNER: ${{ github.repository_owner }}
+      PR_MESSAGE: ${{ github.event.pull_request.title }}
+    
     steps:
-      - name: Check message rule
-        env:
-            ISLOCAL: false
-            TOKEN:  ${{ secrets.WORK_FLOW_ACCESS_TOKEN_CLASSIC }}
-            REPO: ${{ github.event.repository.name }}
-            OWNER: ${{ github.repository_owner }}
-            PR_MESSAGE: ${{ github.event.pull_request.title }}
       - name: Checkout repo
         uses: actions/checkout@v3
         with: 
