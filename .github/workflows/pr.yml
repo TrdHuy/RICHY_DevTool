@@ -1,0 +1,24 @@
+name: Pull request check
+
+on:      
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+    branches:
+      - '*'
+jobs:
+  check_pr_message:
+    name: Check PR message
+    runs-on: windows-latest
+    steps:
+      - name: Check message rule
+        env:
+            GIT_CONTEXT: ${{ toJson(github) }}
+            PR_INFO_API: ${{ github.event.pull_request._links.self.href }}
+            PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "$GIT_CONTEXT"
+          echo "$PR_TITLE"
