@@ -1,7 +1,6 @@
 ﻿using RICHYEngine.Views.Holders;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,9 +29,16 @@ namespace RICHY_DevTool.View.Widgets
             InitializeComponent();
             var pointSize = new Vector2(8, 8);
             graphHolder = new GraphHolder(new GraphContainerImpl(ContainerCanvas, PointContainerCanvas),
-               () => new GraphPointImpl(PointContainerCanvas, new Ellipse(), pointSize),
-               () => new GraphLineImpl(ContainerCanvas, new Line(), pointSize),
-               () => new GraphLabelImpl(ContainerCanvas, new TextBlock()));
+               (targetEle) => new GraphPointImpl(PointContainerCanvas, new Ellipse(), pointSize),
+               (targetEle) =>
+               {
+                   if (targetEle == GraphElement.Line)
+                   {
+                       return new GraphLineImpl(PointContainerCanvas, new Line(), pointSize);
+                   }
+                   return new GraphLineImpl(ContainerCanvas, new Line(), pointSize);
+               },
+               (targetEle) => new GraphLabelImpl(ContainerCanvas, new TextBlock()));
         }
 
         private void ContainerGrid_MouseEnter(object sender, MouseEventArgs e)
@@ -101,7 +107,7 @@ namespace RICHY_DevTool.View.Widgets
             Canvas.SetLeft(ReverseCoorText, mousePos.X + 20);
             Canvas.SetTop(ReverseCoorText, mousePos.Y - 20);
 
-            IndexText.Text = $"{(int)((ContainerCanvas.ActualHeight - mousePos.Y) / ContainerCanvas.ActualHeight * YMaxSlider.Value)}";
+            IndexText.Text = $"{graphHolder.GetYValueAtMouse(new Vector2((float)mousePos.X, (float)(ContainerCanvas.ActualHeight - mousePos.Y)))}";
             Canvas.SetLeft(IndexText, mousePos.X + 20);
             Canvas.SetTop(IndexText, mousePos.Y - 20);
         }
@@ -144,6 +150,26 @@ namespace RICHY_DevTool.View.Widgets
             else if (sender == XDistanceSlider)
             {
                 graphHolder?.ChangeXDistance((int)e.NewValue);
+            }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender == LeftBut)
+            {
+                graphHolder.MoveGraph(-10, 0);
+            }
+            else if (sender == RightBut)
+            {
+                graphHolder.MoveGraph(10, 0);
+            }
+            else if (sender == UpBut)
+            {
+                graphHolder.MoveGraph(0, -10);
+            }
+            else if (sender == DownBut)
+            {
+                graphHolder.MoveGraph(0, 10);
             }
         }
     }
@@ -304,13 +330,8 @@ namespace RICHY_DevTool.View.Widgets
 
         public void SetCanvasPosition(Vector2 position)
         {
-            SetReversePos(position, mContainerCanvas);
-        }
-
-        protected void SetReversePos(Vector2 position, UIElement element)
-        {
-            Canvas.SetLeft(element, position.X);
-            Canvas.SetTop(element, mContainerCanvas.ActualHeight - position.Y);
+            Canvas.SetLeft(mContainerCanvas, position.X);
+            Canvas.SetTop(mContainerCanvas, position.Y);
         }
 
     }
@@ -327,7 +348,7 @@ namespace RICHY_DevTool.View.Widgets
 
         public float GraphWidth => (float)mContainerCanvas.ActualWidth;
 
-        public ICanvasHolder PointCanvasHolder => mPointContainerCanvasHolder;
+        public ICanvasHolder PointAndLineCanvasHolder => mPointContainerCanvasHolder;
 
         public void Clear()
         {
