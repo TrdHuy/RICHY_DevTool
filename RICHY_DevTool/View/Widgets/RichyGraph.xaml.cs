@@ -137,7 +137,14 @@ namespace RICHY_DevTool.View.Widgets
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            graphHolder?.ChangeYMax((int)e.NewValue);
+            if (sender == YMaxSlider)
+            {
+                graphHolder?.ChangeYMax((int)e.NewValue);
+            }
+            else if (sender == XDistanceSlider)
+            {
+                graphHolder?.ChangeXDistance((int)e.NewValue);
+            }
         }
     }
 

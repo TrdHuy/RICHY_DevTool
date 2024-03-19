@@ -67,6 +67,7 @@ namespace RICHYEngine.Views.Holders
 
         private List<IGraphPointValue>? mCurrentShowingValueList;
         private float yMax = 100f;
+        private float xPointDistance = 50f;
 
         public GraphHolder(IGraphContainer graphContainer
             , Func<IGraphPointDrawer> graphPointGenerator
@@ -96,6 +97,16 @@ namespace RICHYEngine.Views.Holders
             }
         }
 
+        public void ChangeXDistance(float distance)
+        {
+            xPointDistance = distance;
+            if (mCurrentShowingValueList != null)
+            {
+                ShowGraph(mCurrentShowingValueList);
+            }
+        }
+
+
         public void ShowGraph(List<IGraphPointValue> valueList)
         {
             mCurrentShowingValueList = valueList;
@@ -105,7 +116,7 @@ namespace RICHYEngine.Views.Holders
             float graphHeight = mGraphContainer.GraphHeight;
             float graphWidth = mGraphContainer.GraphWidth;
             SetupDash(graphHeight, graphWidth, dashDistanceX, dashDistanceY);
-            SetupPointAndConnection(mCurrentShowingValueList, graphHeight, dashDistanceX);
+            SetupPointAndConnection(mCurrentShowingValueList, graphHeight, xPointDistance);
             SetUpLabelY(graphHeight, dashDistanceY);
 
             IGraphLineDrawer oX = mGraphLineGenerator.Invoke();
