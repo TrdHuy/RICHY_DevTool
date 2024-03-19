@@ -116,11 +116,37 @@ namespace RICHY_DevTool.View.Widgets
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            var listValue = new List<int>() { 32, 42, 53, 12, 64, 63, 87, 97, 1, 3, 64, 30 };
+            var listValue = new List<IGraphPointValue>() { CreateValue(32),
+                CreateValue(42) ,
+                CreateValue(53) ,
+                CreateValue(12) ,
+                CreateValue(64) ,
+                CreateValue(63) ,
+                CreateValue(87) ,
+                CreateValue(130) ,
+                CreateValue(1) ,
+                CreateValue(3) ,
+                CreateValue(64) };
             graphHolder.ShowGraph(listValue);
+        }
+
+        IGraphPointValue CreateValue(int xValue)
+        {
+            return new GraphPointValueImpl(xValue);
         }
     }
 
+    public class GraphPointValueImpl : IGraphPointValue
+    {
+        private int xValue;
+        public int XValue => xValue;
+
+        public GraphPointValueImpl(int xValue)
+        {
+            this.xValue = xValue;
+        }
+
+    }
 
     public enum GraphZIndex
     {
@@ -184,7 +210,7 @@ namespace RICHY_DevTool.View.Widgets
         public abstract void SetUpVisual(GraphElement targetElement);
     }
 
-    public class GraphLineImpl : CanvasChildImpl, IGraphLine
+    public class GraphLineImpl : CanvasChildImpl, IGraphLineDrawer
     {
         private Line mLine;
         private Vector2 mPointSize;
@@ -206,7 +232,7 @@ namespace RICHY_DevTool.View.Widgets
             else if (targetElement == GraphElement.DashX || targetElement == GraphElement.DashY)
             {
                 mLine.Stroke = Brushes.Gray;
-                mLine.StrokeThickness = 2;
+                mLine.StrokeThickness = 1;
                 mLine.StrokeDashArray = new DoubleCollection() { 10, 5 };
             }
             else if (targetElement == GraphElement.Line)
@@ -224,7 +250,7 @@ namespace RICHY_DevTool.View.Widgets
             mLine.Y2 = CanvasHeight - Convert.ToDouble(secondPoint.Y);
         }
     }
-    public class GraphPointImpl : CanvasChildImpl, IGraphPoint
+    public class GraphPointImpl : CanvasChildImpl, IGraphPointDrawer
     {
         private Ellipse mPoint;
         private Vector2 mPointSize;
@@ -267,7 +293,7 @@ namespace RICHY_DevTool.View.Widgets
         }
     }
 
-    public class GraphLabelImpl : CanvasChildImpl, IGraphLabel
+    public class GraphLabelImpl : CanvasChildImpl, IGraphLabelDrawer
     {
         protected override UIElement Child => TextBlock;
         private TextBlock TextBlock;
