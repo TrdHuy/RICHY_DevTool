@@ -15,6 +15,8 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         void ChangePointPosition(Vector2 oldPos, Vector2 newPos);
 
+        int TotalPointCount { get; }
+
         [Obsolete("For debugging")]
         object Drawer { get; }
     }
