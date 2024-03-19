@@ -44,7 +44,7 @@ namespace RICHY_DevTool
         private void SkipDayClick(object sender, RoutedEventArgs e)
         {
             SPC.CalculateNewPriceForNextDay(TTVStock);
-            PriceSeries.Values.Add((double)TTVStock.Price);
+            //PriceSeries.Values.Add((double)TTVStock.Price);
         }
     }
 
@@ -81,18 +81,21 @@ namespace RICHY_DevTool
             steadyPer = steadyPer > 100f ? 100f : steadyPer < 0f ? 0f : steadyPer;
 
             var fluctuationRate = (double)(spcRandom.Next((int)(mFluctuationRateMaximum * 100)) / 10000d);
+            var nextDay = targetStock.PriceRecords.Last().Date;
             switch (SelectFromPercentages(increasePer, decreasePer, steadyPer))
             {
                 // increase case
                 case 0:
                     {
                         targetStock.Price = (float)(targetStock.Price * (1 + fluctuationRate));
+                        targetStock.PriceRecords.Add(new PriceRecord(nextDay, targetStock.Price, (float)fluctuationRate));
                         break;
                     }
                 // decrease case
                 case 1:
                     {
                         targetStock.Price = (float)(targetStock.Price * (1 - fluctuationRate));
+                        targetStock.PriceRecords.Add(new PriceRecord(nextDay, targetStock.Price, (float)-fluctuationRate));
                         break;
                     }
                 //steady case
@@ -129,12 +132,29 @@ namespace RICHY_DevTool
 
     public class Stock
     {
+        private const float INIT_PRICE = 10000f;
         public string Name { get; set; } = "";
-        public float Price { get; set; } = 10000;
+        public float Price { get; set; } = INIT_PRICE;
         public Collection<StockNews> News { get; set; } = new Collection<StockNews>();
+        public Collection<PriceRecord> PriceRecords { get; } = new Collection<PriceRecord>() {
+            new PriceRecord(DateTime.Now, INIT_PRICE, 0f)
+        };
 
     }
 
+    public class PriceRecord
+    {
+        public DateTime Date { get; set; }
+        public float Price { get; set; }
+        public float FluctuationRate { get; set; }
+
+        public PriceRecord(DateTime date, float price, float fluctuationRate)
+        {
+            Date = date;
+            Price = price;
+            FluctuationRate = fluctuationRate;
+        }
+    }
     public class StockNews
     {
         public string Title { get; set; } = "";
