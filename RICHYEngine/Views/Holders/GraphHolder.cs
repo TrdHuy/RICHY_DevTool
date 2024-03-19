@@ -4,19 +4,23 @@ using static RICHYEngine.Views.Holders.ICanvasChild;
 
 namespace RICHYEngine.Views.Holders
 {
+    public interface ICanvasHolder
+    {
+        void SetCanvasPosition(Vector2 position);
+        public void Clear();
+    }
     public interface IGraphPointValue
     {
         int XValue { get; }
     }
-
     public interface IGraphContainer
     {
+        ICanvasHolder PointCanvasHolder { get; }
         public float GraphHeight { get; }
         public float GraphWidth { get; }
 
         public void Clear();
     }
-
     public interface ICanvasChild
     {
         public enum GraphElement
@@ -34,7 +38,7 @@ namespace RICHYEngine.Views.Holders
         /// Unity Implementation Eg: 
         /// lastPoint.GetComponent<RectTransform>().anchoredPosition;
         /// </summary>
-        Vector2 GetPosition();
+        Vector2 GetPositionOnCanvas();
 
 
         /// <summary>
@@ -43,14 +47,21 @@ namespace RICHYEngine.Views.Holders
         /// line.GetComponent<Image>().type = Image.Type.Sliced;
         /// </summary>
         void SetUpVisual(GraphElement targetElement);
+
+
+        Vector2 GetPositions()
+        {
+            return GetPositions();
+        }
     }
     public interface IGraphLineDrawer : ICanvasChild
     {
-        void SetPosition(Vector2 firstPoint, Vector2 secondPoint);
+        void SetPositionOnCanvas(Vector2 firstPoint, Vector2 secondPoint);
     }
     public interface IGraphPointDrawer : ICanvasChild
     {
-        void SetPosition(GraphElement targetElement, Vector2 position);
+        void SetPositionOnCanvas(GraphElement targetElement, Vector2 position);
+
     }
 
     public interface IGraphLabelDrawer : IGraphPointDrawer
@@ -110,32 +121,38 @@ namespace RICHYEngine.Views.Holders
         public void ShowGraph(List<IGraphPointValue> valueList)
         {
             mCurrentShowingValueList = valueList;
+            mGraphContainer.PointCanvasHolder.Clear();
             mGraphContainer.Clear();
+
             const float dashDistanceY = 50f;
             const float dashDistanceX = 50f;
+            const float displayOffsetY = 30f;
+            const float displayOffsetX = 80f;
             float graphHeight = mGraphContainer.GraphHeight;
             float graphWidth = mGraphContainer.GraphWidth;
-            SetupDash(graphHeight, graphWidth, dashDistanceX, dashDistanceY);
-            SetupPointAndConnection(mCurrentShowingValueList, graphHeight, xPointDistance);
-            SetUpLabelY(graphHeight, dashDistanceY);
+            SetupDash(graphHeight, graphWidth, dashDistanceX, dashDistanceY, displayOffsetY, displayOffsetX);
+            SetupPointAndConnection(mCurrentShowingValueList,
+                graphHeight,
+                xPointDistance, displayOffsetY, displayOffsetX);
+            SetUpLabelY(graphHeight, dashDistanceY, displayOffsetX, displayOffsetY);
 
             IGraphLineDrawer oX = mGraphLineGenerator.Invoke();
             if (oX.SetParent(GraphElement.Ox))
             {
                 oX.SetUpVisual(GraphElement.Ox);
-                oX.SetPosition(new Vector2(0, 0), new Vector2(graphWidth, 0));
+                oX.SetPositionOnCanvas(new Vector2(0, 0 + displayOffsetY), new Vector2(graphWidth, 0 + displayOffsetY));
             }
 
             IGraphLineDrawer oY = mGraphLineGenerator.Invoke();
             if (oY.SetParent(GraphElement.Oy))
             {
                 oY.SetUpVisual(GraphElement.Oy);
-                oY.SetPosition(new Vector2(0, 0), new Vector2(0, graphHeight));
+                oY.SetPositionOnCanvas(new Vector2(0 + displayOffsetX, 0), new Vector2(0 + displayOffsetX, graphHeight));
             }
         }
         #endregion
 
-        private void SetUpLabelY(float graphHeight, float dashYDistance)
+        private void SetUpLabelY(float graphHeight, float dashYDistance, float displayOffsetX, float displayOffsetY)
         {
             for (int i = 0; i < graphHeight / dashYDistance; i++)
             {
@@ -146,14 +163,16 @@ namespace RICHYEngine.Views.Holders
                 {
                     labelY.SetUpVisual(GraphElement.LabelY);
                     labelY.SetText((yMax * normalizedValue).ToString("F2"));
-                    labelY.SetPosition(GraphElement.LabelY, new Vector2(-20, yPos));
+                    labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(-20 + displayOffsetX, yPos + displayOffsetY));
                 }
             }
         }
 
         private void SetupPointAndConnection(List<IGraphPointValue> showingList,
             float displayAreaHeight,
-            float dashDistanceX)
+            float dashDistanceX,
+            float displayOffsetY,
+            float displayOffsetX)
         {
             IGraphPointDrawer? lastPoint = null;
             for (int i = 0; i < showingList.Count; i++)
@@ -166,13 +185,13 @@ namespace RICHYEngine.Views.Holders
                 {
                     labelX.SetUpVisual(GraphElement.LabelX);
                     labelX.SetText(i.ToString());
-                    labelX.SetPosition(GraphElement.LabelX, new Vector2(xPos, -10));
+                    labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos + displayOffsetX, -10 + displayOffsetY));
                 }
 
-                var point = CreatePoint(new Vector2(xPos, yPos));
+                var point = CreatePoint(new Vector2(xPos + displayOffsetX, yPos + displayOffsetY));
                 if (lastPoint != null)
                 {
-                    CreatePointConnection(lastPoint.GetPosition(), point.GetPosition());
+                    CreatePointConnection(lastPoint.GetPositionOnCanvas(), point.GetPositionOnCanvas());
                 }
                 lastPoint = point;
             }
@@ -182,7 +201,9 @@ namespace RICHYEngine.Views.Holders
             float graphHeight,
             float graphWidth,
             float dashXDistance,
-            float dashYDistance)
+            float dashYDistance,
+            float displayOffsetY,
+            float displayOffsetX)
         {
             for (int i = 0; i < graphWidth / dashXDistance; i++)
             {
@@ -192,7 +213,7 @@ namespace RICHYEngine.Views.Holders
                 if (dashX.SetParent(GraphElement.DashX))
                 {
                     dashX.SetUpVisual(GraphElement.DashX);
-                    dashX.SetPosition(new Vector2(xPos, 0), new Vector2(xPos, graphHeight));
+                    dashX.SetPositionOnCanvas(new Vector2(xPos + displayOffsetX - dashXDistance, 0), new Vector2(xPos + displayOffsetX - dashXDistance, graphHeight));
                 }
             }
 
@@ -204,7 +225,7 @@ namespace RICHYEngine.Views.Holders
                 if (dashY.SetParent(GraphElement.DashY))
                 {
                     dashY.SetUpVisual(GraphElement.DashY);
-                    dashY.SetPosition(new Vector2(0, yPos), new Vector2(graphWidth, yPos));
+                    dashY.SetPositionOnCanvas(new Vector2(0, yPos + displayOffsetY), new Vector2(graphWidth, yPos + displayOffsetY));
                 }
             }
         }
@@ -216,7 +237,7 @@ namespace RICHYEngine.Views.Holders
             if (point.SetParent(GraphElement.Point))
             {
                 point.SetUpVisual(GraphElement.Point);
-                point.SetPosition(GraphElement.Point, pos);
+                point.SetPositionOnCanvas(GraphElement.Point, pos);
             }
             return point;
         }
@@ -227,7 +248,7 @@ namespace RICHYEngine.Views.Holders
             if (line.SetParent(GraphElement.Line))
             {
                 line.SetUpVisual(GraphElement.Line);
-                line.SetPosition(posA, posB);
+                line.SetPositionOnCanvas(posA, posB);
             }
         }
 
