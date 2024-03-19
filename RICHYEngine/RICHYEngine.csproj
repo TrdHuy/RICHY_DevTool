@@ -7,13 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="UnityEngine">
-      <HintPath>..\UnityLibs\2022.3.19f1-x86_64\Editor\Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
+    <Compile Remove="Views\Base\**" />
+    <EmbeddedResource Remove="Views\Base\**" />
+    <None Remove="Views\Base\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Views\Base\" />
+    <Reference Include="UnityEngine">
+      <HintPath>..\UnityLibs\2022.3.19f1-x86_64\Editor\Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
