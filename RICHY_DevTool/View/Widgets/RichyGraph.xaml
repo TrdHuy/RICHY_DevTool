@@ -23,7 +23,21 @@
 			  Background="Black"
 			  Width="750"
 			  Height="450">
+			<Canvas ClipToBounds="True"
+					Width="600"
+					Height="400">
+				<Canvas x:Name="ContainerCanvas"
+						Width="600"
+						Height="400">
+				</Canvas>
+				<Canvas x:Name="PointContainerCanvas"
+						Width="600"
+						Height="400">
+				</Canvas>
+			</Canvas>
 			<Canvas x:Name="ControlCanvas"
+					Background="Transparent"
+					MouseMove="ContainerCanvas_MouseMove"
 					Width="{Binding ElementName=ContainerCanvas, Path=ActualWidth}"
 					Height="{Binding ElementName=ContainerCanvas, Path=ActualHeight}">
 				<TextBlock x:Name="CoorText"
@@ -56,20 +70,6 @@
 					  Fill="Aqua"
 					  Stroke="Aqua"
 					  StrokeThickness="1" />
-			</Canvas>
-			<Canvas ClipToBounds="True"
-					Width="600"
-					Height="400">
-				<Canvas x:Name="ContainerCanvas"
-						MouseMove="ContainerCanvas_MouseMove"
-						Width="600"
-						Height="400">
-				</Canvas>
-				<Canvas x:Name="PointContainerCanvas"
-						MouseMove="ContainerCanvas_MouseMove"
-						Width="600"
-						Height="400">
-				</Canvas>
 			</Canvas>
 
 		</Grid>
@@ -105,6 +105,41 @@
 							ValueChanged="Slider_ValueChanged" />
 					<TextBlock Text="{Binding ElementName=XDistanceSlider, Path=Value, StringFormat='#'}" />
 				</StackPanel>
+			</Border>
+			<Border BorderThickness="1"
+					BorderBrush="Black"
+					Width="90"
+					Height="90">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+					<Grid.RowDefinitions>
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+					</Grid.RowDefinitions>
+					<RepeatButton Grid.Row="1"
+								  Click="Button_Click"
+								  x:Name="LeftBut"
+								  Content="L" />
+					<RepeatButton Grid.Row="1"
+								  x:Name="RightBut"
+								  Content="R"
+								  Click="Button_Click"
+								  Grid.Column="2" />
+					<RepeatButton Grid.Column="1"
+								  x:Name="UpBut"
+								  Content="U"
+								  Click="Button_Click" />
+					<RepeatButton Grid.Row="2"
+								  x:Name="DownBut"
+								  Click="Button_Click"
+								  Content="D"
+								  Grid.Column="1" />
+				</Grid>
 			</Border>
 
 		</WrapPanel>
