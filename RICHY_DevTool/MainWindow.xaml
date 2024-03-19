@@ -4,6 +4,7 @@
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:RICHY_DevTool"
+		xmlns:wg="clr-namespace:RICHY_DevTool.View.Widgets"
 		xmlns:wpf="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
 		mc:Ignorable="d"
 		Title="MainWindow"
@@ -14,17 +15,19 @@
 			<RowDefinition />
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
-		<wpf:CartesianChart>
+		<!--<wpf:CartesianChart>
 			<wpf:CartesianChart.Series>
 				<wpf:StepLineSeries x:Name="PriceSeries"
 									Values=""/>
-				<!--<wpf:StepLineSeries Values="1,4,3,1,4,2,1,2,3,5"
+				--><!--<wpf:StepLineSeries Values="1,4,3,1,4,2,1,2,3,5"
 									AlternativeStroke="Transparent"
 									PointGeometry="{x:Null}"
-									StrokeThickness="3" />-->
+									StrokeThickness="3" />--><!--
 			</wpf:CartesianChart.Series>
-		</wpf:CartesianChart>
-		<WrapPanel Grid.Row="1">
+		</wpf:CartesianChart>-->
+		<wg:PriceChart />
+		<WrapPanel Grid.Row="1"
+				   Background="Aqua">
 			<Button Content=" Skip day "
 					Height="30" 
 					Click="SkipDayClick"/>
