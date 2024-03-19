@@ -4,6 +4,11 @@ using static RICHYEngine.Views.Holders.ICanvasChild;
 
 namespace RICHYEngine.Views.Holders
 {
+    public interface IGraphPointValue
+    {
+        int XValue { get; }
+    }
+
     public interface IGraphContainer
     {
         public float GraphHeight { get; }
@@ -39,16 +44,16 @@ namespace RICHYEngine.Views.Holders
         /// </summary>
         void SetUpVisual(GraphElement targetElement);
     }
-    public interface IGraphLine : ICanvasChild
+    public interface IGraphLineDrawer : ICanvasChild
     {
         void SetPosition(Vector2 firstPoint, Vector2 secondPoint);
     }
-    public interface IGraphPoint : ICanvasChild
+    public interface IGraphPointDrawer : ICanvasChild
     {
         void SetPosition(Vector2 position);
     }
 
-    public interface IGraphLabel : IGraphPoint
+    public interface IGraphLabelDrawer : IGraphPointDrawer
     {
         void SetText(string text);
     }
@@ -56,14 +61,18 @@ namespace RICHYEngine.Views.Holders
     public class GraphHolder
     {
         private IGraphContainer mGraphContainer;
-        private Func<IGraphPoint> mGraphPointGenerator;
-        private Func<IGraphLine> mGraphLineGenerator;
-        private Func<IGraphLabel> mGraphLabelGenerator;
+        private Func<IGraphPointDrawer> mGraphPointGenerator;
+        private Func<IGraphLineDrawer> mGraphLineGenerator;
+        private Func<IGraphLabelDrawer> mGraphLabelGenerator;
+
+        private List<IGraphPointValue>? mCurrentShowingValueList;
+        private const float Y_MAX = 100f;
+        private const float VALUE_POINT_X_SIZE = 50f;
 
         public GraphHolder(IGraphContainer graphContainer
-            , Func<IGraphPoint> graphPointGenerator
-            , Func<IGraphLine> graphLineGenerator
-            , Func<IGraphLabel> graphLabelGenerator)
+            , Func<IGraphPointDrawer> graphPointGenerator
+            , Func<IGraphLineDrawer> graphLineGenerator
+            , Func<IGraphLabelDrawer> graphLabelGenerator)
         {
             mGraphContainer = graphContainer;
             mGraphPointGenerator = graphPointGenerator;
@@ -71,37 +80,41 @@ namespace RICHYEngine.Views.Holders
             mGraphLabelGenerator = graphLabelGenerator;
         }
 
-        public void ShowGraph(List<int> valueList)
+        public void ShowGraph(List<IGraphPointValue> valueList)
         {
+            mCurrentShowingValueList = valueList;
             mGraphContainer.Clear();
             float graphHeight = mGraphContainer.GraphHeight;
             float graphWidth = mGraphContainer.GraphWidth;
-            float yMax = 100f;
-            float xSize = 50f;
-            IGraphPoint? lastPoint = null;
-            for (int i = 0; i < valueList.Count; i++)
+            IGraphPointDrawer? lastPoint = null;
+            // Set up dashX, labelX
+            for (int i = 1; i < mGraphContainer.GraphWidth / VALUE_POINT_X_SIZE; i++)
             {
-                float xPos = i * xSize;
-                float yPos = (valueList[i] / yMax) * graphHeight;
+                float xPos = i * VALUE_POINT_X_SIZE;
 
-                if (i > 0)
+                var dashX = mGraphLineGenerator.Invoke();
+                if (dashX.SetParent(GraphElement.DashX))
                 {
-                    var labelX = mGraphLabelGenerator.Invoke();
-                    if (labelX.SetParent(GraphElement.LabelX))
-                    {
-                        labelX.SetUpVisual(GraphElement.LabelX);
-                        labelX.SetText(i.ToString());
-                        labelX.SetPosition(new Vector2(xPos, -10));
-                    }
-
-                    var dashX = mGraphLineGenerator.Invoke();
-                    if (dashX.SetParent(GraphElement.DashX))
-                    {
-                        dashX.SetUpVisual(GraphElement.DashX);
-                        dashX.SetPosition(new Vector2(xPos, 0), new Vector2(xPos, graphHeight));
-                    }
+                    dashX.SetUpVisual(GraphElement.DashX);
+                    dashX.SetPosition(new Vector2(xPos, 0), new Vector2(xPos, graphHeight));
                 }
 
+                var labelX = mGraphLabelGenerator.Invoke();
+                if (labelX.SetParent(GraphElement.LabelX))
+                {
+                    labelX.SetUpVisual(GraphElement.LabelX);
+                    labelX.SetText(i.ToString());
+                    labelX.SetPosition(new Vector2(xPos, -10));
+                }
+            }
+
+            for (int i = 0; i < mCurrentShowingValueList.Count; i++)
+            {
+                float xPos = i * VALUE_POINT_X_SIZE;
+                float yPos = (mCurrentShowingValueList[i].XValue / Y_MAX) * graphHeight;
+                
+
+                // Set up point and connection line
                 var point = CreatePoint(new Vector2(xPos, yPos));
                 if (lastPoint != null)
                 {
@@ -119,7 +132,7 @@ namespace RICHYEngine.Views.Holders
                 if (labelY.SetParent(GraphElement.LabelY))
                 {
                     labelY.SetUpVisual(GraphElement.LabelY);
-                    labelY.SetText(((int)(yMax * normalizedValue)).ToString());
+                    labelY.SetText(((int)(Y_MAX * normalizedValue)).ToString());
                     labelY.SetPosition(new Vector2(-20, yPos));
                 }
                 if (i > 0)
@@ -133,14 +146,14 @@ namespace RICHYEngine.Views.Holders
                 }
             }
 
-            IGraphLine oX = mGraphLineGenerator.Invoke();
+            IGraphLineDrawer oX = mGraphLineGenerator.Invoke();
             if (oX.SetParent(GraphElement.Ox))
             {
                 oX.SetUpVisual(GraphElement.Ox);
                 oX.SetPosition(new Vector2(0, 0), new Vector2(graphWidth, 0));
             }
 
-            IGraphLine oY = mGraphLineGenerator.Invoke();
+            IGraphLineDrawer oY = mGraphLineGenerator.Invoke();
             if (oY.SetParent(GraphElement.Oy))
             {
                 oY.SetUpVisual(GraphElement.Oy);
@@ -148,9 +161,17 @@ namespace RICHYEngine.Views.Holders
             }
         }
 
-        private IGraphPoint CreatePoint(Vector2 pos)
+        public void AddPointValue(IGraphPointValue newValue)
         {
-            IGraphPoint point = mGraphPointGenerator.Invoke();
+            if (mCurrentShowingValueList != null)
+            {
+                mCurrentShowingValueList.Add(newValue);
+            }
+        }
+
+        private IGraphPointDrawer CreatePoint(Vector2 pos)
+        {
+            IGraphPointDrawer point = mGraphPointGenerator.Invoke();
             if (point.SetParent(GraphElement.Point))
             {
                 point.SetUpVisual(GraphElement.Point);
@@ -161,7 +182,7 @@ namespace RICHYEngine.Views.Holders
 
         private void CreatePointConnection(Vector2 posA, Vector2 posB)
         {
-            IGraphLine line = mGraphLineGenerator.Invoke();
+            IGraphLineDrawer line = mGraphLineGenerator.Invoke();
             if (line.SetParent(GraphElement.Line))
             {
                 line.SetUpVisual(GraphElement.Line);
