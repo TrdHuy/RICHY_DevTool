@@ -16,6 +16,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
 using LiveCharts.Defaults;
+using RICHY_DevTool.ViewModel;
 
 namespace RICHY_DevTool.View.Widgets
 {
@@ -25,29 +26,29 @@ namespace RICHY_DevTool.View.Widgets
     public partial class PriceChart : UserControl, INotifyPropertyChanged
     {
         private ZoomingOptions _zoomingMode = ZoomingOptions.Xy;
+        private StockPriceChartViewModel? _stockViewModel = null;
+
+        public StockPriceChartViewModel? StockViewModel
+        {
+            get { return _stockViewModel; }
+            set
+            {
+                _stockViewModel = value;
+                OnPropertyChanged("StockViewModel");
+            }
+        }
 
         public PriceChart()
         {
             InitializeComponent();
-
-            Labels = new[] { "Jan", "Feb", "Mar", "Apr", "May" };
-
-            //modifying the series collection will animate and update the chart
-            SeriesCollection.Add(new LineSeries
-            {
-                Title = "Series 4",
-                Values = GetData(),
-                LineSmoothness = 0, //0: straight lines, 1: really smooth lines
-                PointGeometrySize = 5,
-                PointForeground = Brushes.Gray
-            });
-
         }
 
-        public SeriesCollection SeriesCollection { get; set; } = new SeriesCollection();
-        public string[] Labels { get; set; }
-        public Func<double, string> YFormatter { get; set; } = value => value.ToString("C");
-        public Func<double, string> XFormatter { get; set; } = val => new DateTime((long)val).ToString("dd MMM");
+
+        public Func<double, string> YFormatter { get; set; } = value => value.ToString("### VND");
+        public Func<double, string> XFormatter { get; set; } = (val) =>
+        {
+            return new DateTime((long)val).ToString("dd MMM");
+        };
         public ZoomingOptions ZoomingMode
         {
             get { return _zoomingMode; }
@@ -58,23 +59,7 @@ namespace RICHY_DevTool.View.Widgets
             }
         }
 
-        private ChartValues<DateTimePoint> GetData()
-        {
-            var r = new Random();
-            var trend = 100;
-            var values = new ChartValues<DateTimePoint>();
-
-            for (var i = 0; i < 100; i++)
-            {
-                var seed = r.NextDouble();
-                if (seed > .8) trend += seed > .9 ? 50 : -50;
-                values.Add(new DateTimePoint(DateTime.Now.AddDays(i), trend + r.Next(0, 10)));
-            }
-
-            return values;
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName = null)
         {
@@ -108,7 +93,7 @@ namespace RICHY_DevTool.View.Widgets
             }
         }
 
-        
+
         private void container_MouseEnter(object sender, MouseEventArgs e)
         {
             Focus();

@@ -15,17 +15,7 @@
 			<RowDefinition />
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
-		<!--<wpf:CartesianChart>
-			<wpf:CartesianChart.Series>
-				<wpf:StepLineSeries x:Name="PriceSeries"
-									Values=""/>
-				--><!--<wpf:StepLineSeries Values="1,4,3,1,4,2,1,2,3,5"
-									AlternativeStroke="Transparent"
-									PointGeometry="{x:Null}"
-									StrokeThickness="3" />--><!--
-			</wpf:CartesianChart.Series>
-		</wpf:CartesianChart>-->
-		<wg:PriceChart />
+		<wg:PriceChart x:Name="Chart" />
 		<WrapPanel Grid.Row="1"
 				   Background="Aqua">
 			<Button Content=" Skip day "
