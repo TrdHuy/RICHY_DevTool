@@ -21,9 +21,30 @@ namespace RICHY_DevTool
     /// </summary>
     public partial class MainWindow : Window
     {
+        private Stock TTVStock = new Stock()
+        {
+            Name = "TST",
+            News = new Collection<StockNews> {
+                    new StockNews()
+                    {
+                        AffectedStockPrice_DecreasePercent = -30f,
+                        AffectedStockPrice_SteadyPercent = -30f,
+                        AffectedStockPrice_IncreasePercent = 60f,
+                    },
+                },
+        };
+        private StockPriceController SPC = new StockPriceController(10f);
+
+
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void SkipDayClick(object sender, RoutedEventArgs e)
+        {
+            SPC.CalculateNewPriceForNextDay(TTVStock);
+            PriceSeries.Values.Add((double)TTVStock.Price);
         }
     }
 
