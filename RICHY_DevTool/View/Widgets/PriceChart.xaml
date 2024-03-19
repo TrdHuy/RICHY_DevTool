@@ -17,8 +17,8 @@
 
 
 		<lvc:CartesianChart Grid.Row="2"
-							Series="{Binding SeriesCollection, ElementName=container}"
-							Zoom="{Binding ZoomingMode}">
+							Series="{Binding StockViewModel.SeriesCollection, ElementName=container}"
+							Zoom="{Binding ZoomingMode, ElementName=container}">
 			<lvc:CartesianChart.AxisX>
 				<lvc:Axis Name="X"
 						  LabelFormatter="{Binding XFormatter}"
@@ -26,7 +26,7 @@
 			</lvc:CartesianChart.AxisX>
 			<lvc:CartesianChart.AxisY>
 				<lvc:Axis Name="Y"
-						  LabelFormatter="{Binding YFormatter}" />
+						  LabelFormatter="{Binding YFormatter}"/>
 			</lvc:CartesianChart.AxisY>
 		</lvc:CartesianChart>
 
