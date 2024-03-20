@@ -130,8 +130,14 @@ namespace RICHY_DevTool.View.Widgets
                 CreateValue(63) ,
                 CreateValue(87) ,
                 CreateValue(130) ,
-                CreateValue(1) ,
-                CreateValue(3) ,
+                CreateValue(14) ,
+                CreateValue(52) ,
+                CreateValue(53) ,
+                CreateValue(54) ,
+                CreateValue(55) ,
+                CreateValue(56) ,
+                CreateValue(57) ,
+                CreateValue(53) ,
                 CreateValue(64) };
             graphHolder.ShowGraph(listValue);
         }
