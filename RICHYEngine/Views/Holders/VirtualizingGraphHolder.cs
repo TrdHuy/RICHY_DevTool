@@ -47,9 +47,9 @@ namespace RICHYEngine.Views.Holders
 
         public override void ShowGraph(List<IGraphPointValue> valueList)
         {
-            base.ShowGraph(valueList);
             mCurrentStartIndex = GetStartPointIndex();
             mCurrentEndIndex = GetEndPointIndex();
+            base.ShowGraph(valueList);
         }
 
         public override void ChangeYMax(float newYMax)
@@ -58,8 +58,11 @@ namespace RICHYEngine.Views.Holders
             {
                 yMax = newYMax;
                 RearrangePointAndConnection(DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, yMax, mGraphContainer.GraphHeight);
+                InvalidateLabelY(mGraphContainer.GraphHeight, dashDistanceY);
+
             }
         }
+
         public override void ChangeXDistance(float distance)
         {
             var newDistance = distance < X_POINT_DISTANCE_MIN ? X_POINT_DISTANCE_MIN : distance;
@@ -180,6 +183,58 @@ namespace RICHYEngine.Views.Holders
             Debug.WriteLine($"rangeX={rangeX}");
             Debug.WriteLine($"endPoint={endPoint}");
             return endPoint;
+        }
+
+        protected override IGraphLabelDrawer GenerateLabelX(IGraphPointValue pointValue, float displayOffsetY, float displayOffsetX, float pointIndex)
+        {
+            if (pointIndex >= mCurrentStartIndex && pointIndex <= mCurrentEndIndex)
+            {
+                return base.GenerateLabelX(pointValue, displayOffsetY, displayOffsetX, pointIndex);
+            }
+            else
+            {
+                var labelX = mGraphLabelGenerator.Invoke(GraphElement.LabelX);
+                float xPos = pointIndex * xPointDistance;
+                labelX.SetUpVisual(GraphElement.LabelX);
+                labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
+                labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos + displayOffsetX + mPointCanvasHolderLeft, -10 + displayOffsetY));
+                elementCache.labelXDrawers.Add(labelX);
+                return labelX;
+            }
+        }
+
+        protected override IGraphPointDrawer GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight)
+        {
+            if (pointIndex >= mCurrentStartIndex && pointIndex <= mCurrentEndIndex)
+            {
+                return base.GeneratePoint(graphPointValue, pointIndex, graphHeight);
+            }
+            else
+            {
+                float xPos = pointIndex * xPointDistance + DISPLAY_OFFSET_X;
+                float yPos = (graphPointValue.YValue / yMax) * graphHeight + DISPLAY_OFFSET_Y;
+
+                IGraphPointDrawer point = mGraphPointGenerator.Invoke(GraphElement.Point);
+                point.SetUpVisual(GraphElement.Point);
+                point.SetPositionOnCanvas(GraphElement.Point, new Vector2(xPos, yPos));
+                elementCache.pointDrawers.Add(point);
+                return point;
+            }
+        }
+
+        protected override void GeneratePointConnection(Vector2 posA, Vector2 posB, int lineIndex)
+        {
+            if (lineIndex >= mCurrentStartIndex && lineIndex <= mCurrentEndIndex)
+            {
+                base.GeneratePointConnection(posA, posB, lineIndex);
+            }
+            else
+            {
+                IGraphLineDrawer line = mGraphLineGenerator.Invoke(GraphElement.Line);
+                line.SetUpVisual(GraphElement.Line);
+                line.SetPositionOnCanvas(posA, posB);
+                elementCache.lineConnectionDrawers.Add(line);
+            }
         }
     }
 }
