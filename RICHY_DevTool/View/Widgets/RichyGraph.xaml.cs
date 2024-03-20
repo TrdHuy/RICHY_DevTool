@@ -2,16 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using static RICHYEngine.Views.Holders.ICanvasChild;
 
@@ -22,7 +16,7 @@ namespace RICHY_DevTool.View.Widgets
     /// </summary>
     public partial class RichyGraph : UserControl
     {
-        private VirtualizingGraphHolder graphHolder;
+        private GraphHolder graphHolder;
 
         public RichyGraph()
         {
@@ -38,7 +32,8 @@ namespace RICHY_DevTool.View.Widgets
                    }
                    return new GraphLineImpl(ContainerCanvas, new Line(), pointSize);
                },
-               (targetEle) => new GraphLabelImpl(ContainerCanvas, new TextBlock()));
+               (targetEle) => new GraphLabelImpl(ContainerCanvas, new TextBlock()),
+               (targetEle) => new GraphPolyLineImpl(PointContainerCanvas, new Polyline()));
         }
 
         private void ContainerGrid_MouseEnter(object sender, MouseEventArgs e)
@@ -155,7 +150,7 @@ namespace RICHY_DevTool.View.Widgets
             }
             else if (sender == XDistanceSlider)
             {
-                graphHolder?.ChangeZoomX((int)e.NewValue - (int)e.OldValue);
+                //graphHolder?.ChangeZoomX((int)e.NewValue - (int)e.OldValue);
             }
         }
 
@@ -206,6 +201,7 @@ namespace RICHY_DevTool.View.Widgets
         Line = 99,
         Point = 100,
         LineDash = 0,
+        OxOy = 1
     }
 
     public abstract class CanvasChildImpl : ICanvasChild
@@ -248,6 +244,10 @@ namespace RICHY_DevTool.View.Widgets
                     case GraphElement.DashY:
                         zIndex = (int)GraphZIndex.LineDash;
                         break;
+                    case GraphElement.Ox:
+                    case GraphElement.Oy:
+                        zIndex = (int)GraphZIndex.OxOy;
+                        break;
                 }
                 Panel.SetZIndex(Child, zIndex);
             }
@@ -268,7 +268,10 @@ namespace RICHY_DevTool.View.Widgets
             Canvas.SetLeft(element, position.X);
             Canvas.SetTop(element, CanvasHeight - position.Y);
         }
-
+        protected Vector2 GetReversePos(Vector2 originalPos)
+        {
+            return new Vector2(originalPos.X, CanvasHeight - originalPos.Y);
+        }
         public abstract void SetUpVisual(GraphElement targetElement);
 
     }
@@ -377,6 +380,37 @@ namespace RICHY_DevTool.View.Widgets
         public void Clear()
         {
             mContainerCanvas.Children.Clear();
+        }
+    }
+
+    public class GraphPolyLineImpl : CanvasChildImpl, IGraphPolyLineDrawer
+    {
+        protected override UIElement Child => mPolyLine;
+        private Polyline mPolyLine;
+
+        public GraphPolyLineImpl(Canvas container, Polyline polyLine) : base(container)
+        {
+            mPolyLine = polyLine;
+        }
+
+
+        public override void SetUpVisual(GraphElement targetElement)
+        {
+            mPolyLine.Stroke = Brushes.Aqua;
+            mPolyLine.StrokeThickness = 2;
+        }
+
+
+        public void AddNewPoint(Vector2 point)
+        {
+            var reversePos = GetReversePos(point);
+            mPolyLine.Points.Add(new Point(reversePos.X, reversePos.Y));
+        }
+
+        public void ChangePointPosition(int pointIndex, Vector2 newPos)
+        {
+            var reversePos = GetReversePos(newPos);
+            mPolyLine.Points[pointIndex] = new Point(reversePos.X, reversePos.Y);
         }
     }
     public class GraphLabelImpl : CanvasChildImpl, IGraphLabelDrawer
