@@ -23,14 +23,27 @@
 			  Background="Black"
 			  Width="750"
 			  Height="450">
-			<Canvas Width="600"
+			<Canvas x:Name="MainContainerCanvas"
+					Width="600"
 					Background="DarkGray"
 					Height="400">
-				<Canvas x:Name="ContainerCanvas"
+				<Canvas x:Name="GridDashContainerCanvas"
 						Width="600"
 						Height="400">
 				</Canvas>
-				<Canvas x:Name="PointContainerCanvas"
+				<Canvas x:Name="AxisContainerCanvas"
+						Width="600"
+						Height="400">
+				</Canvas>
+				<Canvas x:Name="LabelYContainerCanvas"
+						Width="600"
+						Height="400">
+				</Canvas>
+				<Canvas x:Name="LabelXContainerCanvas"
+						Width="600"
+						Height="400">
+				</Canvas>
+				<Canvas x:Name="PointAndLineContainerCanvas"
 						Width="600"
 						Height="400">
 				</Canvas>
@@ -71,7 +84,6 @@
 					  Stroke="Aqua"
 					  StrokeThickness="1" />
 			</Canvas>
-
 		</Grid>
 
 		<WrapPanel Grid.Row="2">
@@ -101,7 +113,7 @@
 							Width="200"
 							Maximum="400"
 							Minimum="1"
-							Value="200"
+							Value="50"
 							ValueChanged="Slider_ValueChanged" />
 					<TextBlock Text="{Binding ElementName=XDistanceSlider, Path=Value, StringFormat='#'}" />
 				</StackPanel>
@@ -144,6 +156,9 @@
 			<Button Content="Add New Value" 
 					x:Name="AddNewValueBut"
 					Click="Button_Click"/>
+			<Button Content="Refresh"
+					x:Name="Refresh"
+					Click="Button_Click" />
 		</WrapPanel>
 	</Grid>
 
