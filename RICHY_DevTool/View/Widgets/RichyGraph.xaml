@@ -101,7 +101,7 @@
 							Width="200"
 							Maximum="400"
 							Minimum="1"
-							Value="50"
+							Value="200"
 							ValueChanged="Slider_ValueChanged" />
 					<TextBlock Text="{Binding ElementName=XDistanceSlider, Path=Value, StringFormat='#'}" />
 				</StackPanel>
