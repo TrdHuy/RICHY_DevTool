@@ -8,7 +8,7 @@
 			 Loaded="UserControl_Loaded"
 			 d:DesignWidth="800">
 
-	<Grid Background="#202020">
+	<Grid Background="Wheat">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="10" />
@@ -105,18 +105,24 @@
 			</Border>
 			<Border BorderThickness="1"
 					BorderBrush="Black">
-				<StackPanel Orientation="Horizontal">
-					<TextBlock Text="Zoom X"
-							   FontWeight="Bold" />
+				<StackPanel>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Text="Zoom X"
+								   FontWeight="Bold" />
 
-					<Slider x:Name="XDistanceSlider"
-							Width="200"
-							Maximum="400"
-							Minimum="1"
-							Value="50"
-							ValueChanged="Slider_ValueChanged" />
-					<TextBlock Text="{Binding ElementName=XDistanceSlider, Path=Value, StringFormat='#'}" />
+						<Slider x:Name="XDistanceSlider"
+								Width="200"
+								Maximum="400"
+								Minimum="1"
+								Value="50"
+								ValueChanged="Slider_ValueChanged" />
+						<TextBlock Text="{Binding ElementName=XDistanceSlider, Path=Value, StringFormat='#'}" />
+					</StackPanel>
+					<TextBox Text="50"
+							 x:Name="XDistanceBox"
+							 KeyUp="TextBox_KeyUp" />
 				</StackPanel>
+
 			</Border>
 			<Border BorderThickness="1"
 					BorderBrush="Black"
@@ -153,9 +159,9 @@
 								  Grid.Column="1" />
 				</Grid>
 			</Border>
-			<Button Content="Add New Value" 
+			<Button Content="Add New Value"
 					x:Name="AddNewValueBut"
-					Click="Button_Click"/>
+					Click="Button_Click" />
 			<Button Content="Refresh"
 					x:Name="Refresh"
 					Click="Button_Click" />

@@ -216,7 +216,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         }
 
-        protected virtual IGraphLabelDrawer GenerateLabelX(IGraphPointValue pointValue,
+        protected virtual void GenerateLabelX(IGraphPointValue pointValue,
             float displayOffsetY,
             float displayOffsetX,
             int pointIndex,
@@ -238,7 +238,6 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                     elementCache.labelXDrawers.Insert(0, labelX);
                 }
             }
-            return labelX;
         }
 
         private void SetupDash(
@@ -274,7 +273,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
 
 
-        protected virtual IGraphPointDrawer GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer, bool toLast = true)
+        protected virtual void GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer, bool toLast = true)
         {
             //TODO: Current support to add new point at last index only
             //Debug.Assert(elementCache.pointDrawers.Count == pointIndex);
@@ -298,7 +297,6 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 }
                 graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos), toLast);
             }
-            return point;
         }
 
         /// <summary>
@@ -308,7 +306,12 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         /// <returns></returns>
         protected float GetXPosForPointBaseOnPointIndex(int pointIndexOnGraph)
         {
-            float xPos = pointIndexOnGraph * xPointDistance;
+            return GetXPosForPointBaseOnPointIndex(pointIndexOnGraph, xPointDistance);
+        }
+
+        protected float GetXPosForPointBaseOnPointIndex(int pointIndexOnGraph, float xDistance)
+        {
+            float xPos = pointIndexOnGraph * xDistance;
             return xPos;
         }
 
@@ -318,6 +321,11 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         /// <param name="pointIndexOnGraph"></param>
         /// <returns></returns>
         protected float GetYPosForPointBaseOnValue(IGraphPointValue pointValue)
+        {
+            return GetYPosForPointBaseOnValue(pointValue, yMax);
+        }
+
+        protected float GetYPosForPointBaseOnValue(IGraphPointValue pointValue, float yMax)
         {
             float yPos = pointValue.YValue / yMax * mGraphContainer.GraphHeight;
             return yPos;

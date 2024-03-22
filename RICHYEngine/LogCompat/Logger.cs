@@ -67,9 +67,9 @@ namespace RICHYEngine.LogCompat
             this.classTag = classTag;
         }
 
-        public static class RICHYEngine
+        public static class RICHYEngineLogger
         {
-            private const string PROJECT_TAG = "RICHYEngine";
+            private const string PROJECT_TAG = "RICHYEngineLogger";
             public static void D(string classTag, string message, [CallerMemberName] string caller = "")
             {
 #if DEBUG
@@ -98,18 +98,18 @@ namespace RICHYEngine.LogCompat
                 public static void D(string message, [CallerMemberName] string caller = "")
                 {
 #if DEBUG
-                    RICHYEngine.D("___", message, caller);
+                    RICHYEngineLogger.D("___", message, caller);
 #endif
                 }
 
                 public static void I(string message, [CallerMemberName] string caller = "")
                 {
-                    RICHYEngine.I("___", message, caller);
+                    RICHYEngineLogger.I("___", message, caller);
                 }
 
                 public static void E(string message, [CallerMemberName] string caller = "")
                 {
-                    RICHYEngine.E("___", message, caller);
+                    RICHYEngineLogger.E("___", message, caller);
                 }
             }
         }

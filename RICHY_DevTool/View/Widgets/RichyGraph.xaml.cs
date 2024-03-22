@@ -215,6 +215,15 @@ namespace RICHY_DevTool.View.Widgets
                 showGraph();
             }
         }
+
+        private void TextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                var newDistance = Convert.ToInt32(XDistanceBox.Text);
+                graphHolder?.ChangeXDistance((int)newDistance);
+            }
+        }
     }
 
     public class GraphPointValueImpl : IGraphPointValue
@@ -468,6 +477,8 @@ namespace RICHY_DevTool.View.Widgets
         public override UIElement Child => mPolyLine;
 
         public object Drawer => mPolyLine.Points;
+
+        public int TotalPointCount => mPolyLine.Points.Count;
 
         private Polyline mPolyLine;
 
