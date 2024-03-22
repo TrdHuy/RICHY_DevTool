@@ -152,7 +152,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 Debug.WriteLine($"HUY visibleItemCount={elementCache.pointDrawers.Count}");
                 var deleteFromIndex = mCurrentEndIndex < totalPointCount ? mCurrentEndIndex : totalPointCount - 1;
                 for (int i = deleteFromIndex; i > newEndIndex
-                        && i < elementCache.pointDrawers.Count; i--)
+                        && i - mCurrentStartIndex < elementCache.pointDrawers.Count; i--)
                 {
                     var lastIndex = elementCache.pointDrawers.Count - 1;
                     var pointCache = elementCache.pointDrawers[lastIndex];
