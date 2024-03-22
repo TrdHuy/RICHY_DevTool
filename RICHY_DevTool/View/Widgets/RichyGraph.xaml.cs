@@ -1,4 +1,5 @@
-﻿using RICHYEngine.Views.Holders.GraphHolder;
+﻿using RICHYEngine.LogCompat;
+using RICHYEngine.Views.Holders.GraphHolder;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
