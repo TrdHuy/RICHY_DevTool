@@ -14,5 +14,8 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         void RemovePoint(Vector2 point);
 
         void ChangePointPosition(Vector2 oldPos, Vector2 newPos);
+
+        [Obsolete("For debugging")]
+        object Drawer { get; }
     }
 }
