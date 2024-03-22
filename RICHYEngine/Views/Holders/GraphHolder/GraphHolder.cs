@@ -3,99 +3,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace RICHYEngine.Views.Holders
+namespace RICHYEngine.Views.Holders.GraphHolder
 {
-    public enum GraphElement
-    {
-        Ox, Oy, Point, Line, LabelX, LabelY, DashX, DashY
-    }
-
-    public interface IGraphPointValue
-    {
-        int YValue { get; }
-        object? XValue { get; }
-    }
-
-    public interface ICanvasHolder
-    {
-        void SetCanvasPosition(Vector2 position);
-
-        public void Clear();
-
-        bool AddChild(ICanvasChild child);
-
-        bool RemoveChild(ICanvasChild child);
-    }
-
-    public interface IGraphContainer
-    {
-        ICanvasHolder PointAndLineCanvasHolder { get; }
-        ICanvasHolder LabelXCanvasHolder { get; }
-        ICanvasHolder LabelYCanvasHolder { get; }
-        ICanvasHolder AxisCanvasHolder { get; }
-        ICanvasHolder GridDashCanvasHolder { get; }
-        public float GraphHeight { get; }
-        public float GraphWidth { get; }
-
-        public void Clear()
-        {
-            PointAndLineCanvasHolder.Clear();
-            LabelXCanvasHolder.Clear();
-            LabelYCanvasHolder.Clear();
-            AxisCanvasHolder.Clear();
-            GridDashCanvasHolder.Clear();
-        }
-    }
-    public interface ICanvasChild
-    {
-
-        /// <summary>
-        /// Unity Implementation Eg:
-        /// line.GetComponent<Image>().sprite = lineSpr;
-        /// line.GetComponent<Image>().type = Image.Type.Sliced;
-        /// </summary>
-        void SetUpVisual(GraphElement targetElement);
-
-    }
-    public interface ISingleCanvasElement : ICanvasChild
-    {
-        /// <summary>
-        /// Unity Implementation Eg: 
-        /// lastPoint.GetComponent<RectTransform>().anchoredPosition;
-        /// </summary>
-        Vector2 GetPositionOnCanvas();
-
-        void SetPositionOnCanvas(GraphElement targetElement, Vector2 position);
-    }
-    public interface IGraphPointDrawer : ISingleCanvasElement
-    {
-        IGraphPointValue? graphPointValue { get; set; }
-    }
-    public interface IGraphLabelDrawer : ISingleCanvasElement
-    {
-        void SetText(string text);
-    }
-
-
-    public interface IGraphLineDrawer : ICanvasChild
-    {
-        void SetPositionOnCanvas(Vector2 firstPoint, Vector2 secondPoint);
-    }
-    public interface IGraphPolyLineDrawer : ICanvasChild
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="point"></param>
-        /// <returns>Inserted index</returns>
-        int AddNewPoint(Vector2 point, bool toLast = true);
-
-        void RemovePoint(Vector2 point);
-
-        void ChangePointPosition(Vector2 oldPos, Vector2 newPos);
-    }
-
-
     public class GraphHolder
     {
         protected class GraphElementCache
@@ -392,7 +301,7 @@ namespace RICHYEngine.Views.Holders
 
         protected float GetYPosBaseOnValue(IGraphPointValue pointValue)
         {
-            float yPos = (pointValue.YValue / yMax) * mGraphContainer.GraphHeight + DISPLAY_OFFSET_Y;
+            float yPos = pointValue.YValue / yMax * mGraphContainer.GraphHeight + DISPLAY_OFFSET_Y;
             return yPos;
         }
 
