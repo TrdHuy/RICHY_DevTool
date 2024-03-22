@@ -520,7 +520,8 @@ namespace RICHY_DevTool.View.Widgets
     public class GraphLabelImpl : SingleElementImpl, IGraphLabelDrawer
     {
         public override UIElement Child => TextBlock;
-
+        public float DesiredHeight => (float)TextBlock.DesiredSize.Height;
+        public float DesiredWidth => (float)TextBlock.DesiredSize.Width;
         private TextBlock TextBlock;
 
         public GraphLabelImpl(Canvas container, TextBlock textBlock) : base(container)
