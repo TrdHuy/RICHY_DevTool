@@ -50,31 +50,9 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
         }
 
-        ////public void ChangeZoomX(float offset)
-        ////{
-        ////    var newDistance = xPointDistance + offset;
-        ////    if (newDistance != xPointDistance)
-        ////    {
-        ////        if (newDistance < X_POINT_DISTANCE_MIN)
-        ////        {
-        ////            newDistance = X_POINT_DISTANCE_DEF;
-        ////            mCurrentPointOffsetCount++;
-        ////        }
-        ////        else if (newDistance > X_POINT_DISTANCE_MAX && mCurrentPointOffsetCount > 0)
-        ////        {
-        ////            newDistance = X_POINT_DISTANCE_DEF;
-        ////            mCurrentPointOffsetCount--;
-        ////        }
-        ////        xPointDistance = newDistance;
-        ////        if (mCurrentShowingValueList != null)
-        ////        {
-        ////            ShowGraph(mCurrentShowingValueList);
-        ////        }
-        ////    }
-        ////}
         public override void ChangeXDistance(float distance)
         {
-            var newDistance = distance < X_POINT_DISTANCE_MIN ? X_POINT_DISTANCE_MIN : distance;
+            var newDistance = distance < 1 ? 1 : distance;
             if (mCurrentShowingValueList != null && xPointDistance != newDistance)
             {
                 xPointDistance = newDistance;
@@ -85,89 +63,110 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         private void RearrangePointAndConnection()
         {
-            for (int i = 0; i < elementCache.pointDrawers.Count; i++)
+            if (mCurrentShowingValueList == null)
             {
-                var labelX = elementCache.labelXDrawers[i];
+                throw new Exception("Should not be null here");
+            }
+            for (int i = mCurrentStartIndex; i <= mCurrentEndIndex && i < mCurrentShowingValueList.Count; i++)
+            {
+                var labelX = elementCache.labelXDrawers[i - mCurrentStartIndex];
                 float xPos = GetXPosForPointBaseOnPointIndex(i);
                 labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
 
                 float yPos = GetYPosForPointBaseOnValue(mCurrentShowingValueList![i]);
-                var point = elementCache.pointDrawers[i];
+                var point = elementCache.pointDrawers[i - mCurrentStartIndex];
                 var oldPointPos = point.GetPositionOnCanvas();
                 var newPointPos = new Vector2(xPos, yPos);
                 point.SetPositionOnCanvas(GraphElement.Point, newPointPos);
-                if (CheckIndexIsVisible(i))
-                    elementCache.lineConnectionDrawer!.ChangePointPosition(oldPointPos, newPointPos);
+                elementCache.lineConnectionDrawer!.ChangePointPosition(oldPointPos, newPointPos);
             }
         }
 
         private void UpdateDisplayRangeAndModifyElements()
         {
-            //Debug.WriteLine("HUY --------------");
+            Debug.WriteLine("HUY --------------");
             var newStartIndex = GetStartPointIndex();
             var newEndIndex = GetEndPointIndex();
-            var totalPointCount = elementCache.pointDrawers.Count;
+            if (mCurrentShowingValueList == null || elementCache.lineConnectionDrawer == null)
+            {
+                throw new Exception("Should not be null here");
+            }
+
+            var totalPointCount = mCurrentShowingValueList.Count;
             if (mCurrentStartIndex < newStartIndex)
             {
-                //Debug.WriteLine($"HUY mCurrentStartIndex={mCurrentStartIndex}");
-                //Debug.WriteLine($"HUY newStartIndex={newStartIndex}");
+                Debug.WriteLine($"HUY mCurrentStartIndex={mCurrentStartIndex}");
+                Debug.WriteLine($"HUY newStartIndex={newStartIndex}");
+                Debug.WriteLine($"HUY visibleItemCount={elementCache.pointDrawers.Count}");
 
-                for (int i = mCurrentStartIndex; i < newStartIndex && i < totalPointCount; i++)
+                for (int i = mCurrentStartIndex; i < newStartIndex &&
+                        i < totalPointCount &&
+                        elementCache.pointDrawers.Count > 0; i++)
                 {
-                    mGraphContainer.PointAndLineCanvasHolder.RemoveChild(elementCache.pointDrawers[i]);
-                    mGraphContainer.LabelXCanvasHolder.RemoveChild(elementCache.labelXDrawers[i]);
-                    elementCache.lineConnectionDrawer!.RemovePoint(elementCache.pointDrawers[i].GetPositionOnCanvas());
-                    //Debug.WriteLine($"HUY Remove i={i}");
+                    var pointCache = elementCache.pointDrawers[0];
+                    elementCache.pointDrawers.RemoveAt(0);
+                    mGraphContainer.PointAndLineCanvasHolder.RemoveChild(pointCache);
+                    mGraphContainer.LabelXCanvasHolder.RemoveChild(elementCache.labelXDrawers[0]);
+                    elementCache.labelXDrawers.RemoveAt(0);
+                    elementCache.lineConnectionDrawer!.RemovePoint(pointCache.GetPositionOnCanvas());
+                    Debug.WriteLine($"HUY Remove at={i - mCurrentStartIndex}");
                 }
                 mCurrentStartIndex = newStartIndex;
             }
             else if (mCurrentStartIndex > newStartIndex)
             {
-                //Debug.WriteLine($"HUY mCurrentStartIndex={mCurrentStartIndex}");
-                //Debug.WriteLine($"HUY newStartIndex={newStartIndex}");
-                for (int i = mCurrentStartIndex - 1; i >= newStartIndex; i--)
+                Debug.WriteLine($"HUY mCurrentStartIndex={mCurrentStartIndex}");
+                Debug.WriteLine($"HUY newStartIndex={newStartIndex}");
+                Debug.WriteLine($"HUY visibleItemCount={elementCache.pointDrawers.Count}");
+
+                var startAddIndex = mCurrentStartIndex - 1 >= totalPointCount ? totalPointCount - 1 : mCurrentStartIndex - 1;
+                for (int i = startAddIndex; i >= newStartIndex && i < totalPointCount; i--)
                 {
-                    mGraphContainer.PointAndLineCanvasHolder.AddChild(elementCache.pointDrawers[i]);
-                    mGraphContainer.LabelXCanvasHolder.AddChild(elementCache.labelXDrawers[i]);
-                    elementCache
-                        .lineConnectionDrawer!
-                        .AddNewPoint(elementCache.pointDrawers[i].GetPositionOnCanvas(),
-                        toLast: false);
-                    //Debug.WriteLine($"HUY Add i={i}");
+                    GeneratePoint(mCurrentShowingValueList[i], i, mGraphContainer.GraphHeight, elementCache.lineConnectionDrawer, toLast: false);
+                    GenerateLabelX(mCurrentShowingValueList[i], DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, i, toLast: false);
+                    Debug.WriteLine($"HUY Add i={i}");
                 }
                 mCurrentStartIndex = newStartIndex;
             }
+            assert();
 
             if (mCurrentEndIndex < newEndIndex)
             {
-                //Debug.WriteLine($"HUY mCurrentEndIndex={mCurrentEndIndex}");
-                //Debug.WriteLine($"HUY newEndIndex={newEndIndex}");
-                for (int i = mCurrentEndIndex + 1; i <= newEndIndex && i < elementCache.pointDrawers.Count; i++)
+                Debug.WriteLine($"HUY mCurrentEndIndex={mCurrentEndIndex}");
+                Debug.WriteLine($"HUY newEndIndex={newEndIndex}");
+                Debug.WriteLine($"HUY visibleItemCount={elementCache.pointDrawers.Count}");
+                for (int i = mCurrentEndIndex + 1; i <= newEndIndex
+                        && i < totalPointCount
+                        && i >= mCurrentStartIndex; i++)
                 {
-                    mGraphContainer.PointAndLineCanvasHolder.AddChild(elementCache.pointDrawers[i]);
-                    mGraphContainer.LabelXCanvasHolder.AddChild(elementCache.labelXDrawers[i]);
-                    elementCache
-                       .lineConnectionDrawer!
-                       .AddNewPoint(elementCache.pointDrawers[i].GetPositionOnCanvas(),
-                       toLast: true);
-                    //Debug.WriteLine($"HUY Add i={i}");
+                    GeneratePoint(mCurrentShowingValueList[i], i, mGraphContainer.GraphHeight, elementCache.lineConnectionDrawer, toLast: true);
+                    GenerateLabelX(mCurrentShowingValueList[i], DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, i, toLast: true);
+                    Debug.WriteLine($"HUY Add i={i}");
                 }
                 mCurrentEndIndex = newEndIndex;
             }
             else if (mCurrentEndIndex > newEndIndex)
             {
-                //Debug.WriteLine($"HUY mCurrentEndIndex={mCurrentEndIndex}");
-                //Debug.WriteLine($"HUY newEndIndex={newEndIndex}");
+                Debug.WriteLine($"HUY mCurrentEndIndex={mCurrentEndIndex}");
+                Debug.WriteLine($"HUY newEndIndex={newEndIndex}");
+                Debug.WriteLine($"HUY visibleItemCount={elementCache.pointDrawers.Count}");
                 var deleteFromIndex = mCurrentEndIndex < totalPointCount ? mCurrentEndIndex : totalPointCount - 1;
-                for (int i = deleteFromIndex; i > newEndIndex && i < elementCache.pointDrawers.Count; i--)
+                for (int i = deleteFromIndex; i > newEndIndex
+                        && i < elementCache.pointDrawers.Count; i--)
                 {
-                    mGraphContainer.PointAndLineCanvasHolder.RemoveChild(elementCache.pointDrawers[i]);
-                    mGraphContainer.LabelXCanvasHolder.RemoveChild(elementCache.labelXDrawers[i]);
-                    elementCache.lineConnectionDrawer!.RemovePoint(elementCache.pointDrawers[i].GetPositionOnCanvas());
-                    //Debug.WriteLine($"HUY Remove i={i}");
+                    var lastIndex = elementCache.pointDrawers.Count - 1;
+                    var pointCache = elementCache.pointDrawers[lastIndex];
+                    elementCache.pointDrawers.RemoveAt(lastIndex);
+                    mGraphContainer.PointAndLineCanvasHolder.RemoveChild(pointCache);
+                    mGraphContainer.LabelXCanvasHolder.RemoveChild(elementCache.labelXDrawers[lastIndex]);
+                    elementCache.labelXDrawers.RemoveAt(lastIndex);
+                    elementCache.lineConnectionDrawer!.RemovePoint(pointCache.GetPositionOnCanvas());
+                    Debug.WriteLine($"HUY Remove at={lastIndex}");
                 }
                 mCurrentEndIndex = newEndIndex;
             }
+            assert();
+
         }
 
         private int GetStartPointIndex()
@@ -198,60 +197,40 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             return endPoint;
         }
 
-        protected override IGraphLabelDrawer GenerateLabelX(IGraphPointValue pointValue, float displayOffsetY, float displayOffsetX, int pointIndex)
+        protected override void SetupPointNConnectionNLabelX(List<IGraphPointValue> showingList, float graphHeight, float displayOffsetY, float displayOffsetX)
         {
-            if (pointIndex >= mCurrentStartIndex && pointIndex <= mCurrentEndIndex)
+            IGraphPolyLineDrawer graphPolyLineDrawer = mGraphPolyLineGenerator.Invoke(GraphElement.Line);
+            elementCache.lineConnectionDrawer = graphPolyLineDrawer;
+            mGraphContainer.LabelXCanvasHolder.SetCanvasPosition(new Vector2(GetXPosForLabelXCanvas(), GetYPosForLabelXCanvas()));
+            if (mGraphContainer.PointAndLineCanvasHolder.AddChild(graphPolyLineDrawer))
             {
-                return base.GenerateLabelX(pointValue, displayOffsetY, displayOffsetX, pointIndex);
-            }
-            else
-            {
-                var labelX = mGraphLabelGenerator.Invoke(GraphElement.LabelX);
-                float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
-                labelX.SetUpVisual(GraphElement.LabelX);
-                labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
-                labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
-                elementCache.labelXDrawers.Add(labelX);
-                return labelX;
+                graphPolyLineDrawer.SetUpVisual(targetElement: GraphElement.Line);
+                for (int i = mCurrentStartIndex; i < showingList.Count && i <= mCurrentEndIndex; i++)
+                {
+                    GenerateLabelX(showingList[i], displayOffsetY, displayOffsetX, i);
+
+                    GeneratePoint(showingList[i], i, graphHeight, graphPolyLineDrawer);
+                }
             }
         }
 
-        protected override IGraphPointDrawer GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer)
+        private void assert()
         {
-            if (pointIndex >= mCurrentStartIndex && pointIndex <= mCurrentEndIndex)
+            var start = 0;
+            var temp = 0;
+            foreach (var p in elementCache.pointDrawers)
             {
-                return base.GeneratePoint(graphPointValue, pointIndex, graphHeight, graphPolyLineDrawer);
-            }
-            else
-            {
-                float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
-                float yPos = GetYPosForPointBaseOnValue(graphPointValue);
-
-                IGraphPointDrawer point = mGraphPointGenerator.Invoke(GraphElement.Point);
-                point.SetUpVisual(GraphElement.Point);
-                point.SetPositionOnCanvas(GraphElement.Point, new Vector2(xPos, yPos));
-                elementCache.pointDrawers.Add(point);
-                return point;
+                if (start == 0)
+                {
+                    temp = Convert.ToInt32(p.graphPointValue!.XValue);
+                }
+                else
+                {
+                    Debug.Assert(temp == Convert.ToInt32(p.graphPointValue!.XValue) - 1);
+                    temp = Convert.ToInt32(p.graphPointValue!.XValue);
+                }
+                start++;
             }
         }
-
-        private bool CheckIndexIsVisible(int indexNeedToCheck)
-        {
-            return indexNeedToCheck >= mCurrentStartIndex && indexNeedToCheck <= mCurrentEndIndex;
-        }
-        ////protected override void GeneratePointConnection(Vector2 posA, Vector2 posB, int lineIndex)
-        ////{
-        ////    if (lineIndex >= mCurrentStartIndex && lineIndex <= mCurrentEndIndex)
-        ////    {
-        ////        base.GeneratePointConnection(posA, posB, lineIndex);
-        ////    }
-        ////    else
-        ////    {
-        ////        IGraphLineDrawer line = mGraphLineGenerator.Invoke(GraphElement.Line);
-        ////        line.SetUpVisual(GraphElement.Line);
-        ////        line.SetPositionOnCanvas(posA, posB);
-        ////        elementCache.lineConnectionDrawers.Add(line);
-        ////    }
-        ////}
     }
 }
