@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define WPF_PLATFORM
+
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
