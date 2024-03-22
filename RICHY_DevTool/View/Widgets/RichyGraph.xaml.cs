@@ -15,13 +15,13 @@ namespace RICHY_DevTool.View.Widgets
     /// </summary>
     public partial class RichyGraph : UserControl
     {
-        private GraphHolder graphHolder;
+        private VirtualizingGraphHolder graphHolder;
 
         public RichyGraph()
         {
             InitializeComponent();
             var pointSize = new Vector2(8, 8);
-            graphHolder = new GraphHolder(
+            graphHolder = new VirtualizingGraphHolder(
                graphContainer: new GraphContainerImpl(MainContainerCanvas,
                     mPointContainerCanvas: PointAndLineContainerCanvas,
                     mLabelXCanvas: LabelXContainerCanvas,
@@ -150,18 +150,18 @@ namespace RICHY_DevTool.View.Widgets
                 CreateValue(42,1) ,
                 CreateValue(53,2) ,
                 CreateValue(12,3) ,
-                //CreateValue(64,4) ,
-                //CreateValue(63,5) ,
-                //CreateValue(87,6) ,
-                //CreateValue(130,7) ,
-                //CreateValue(14,8) ,
-                //CreateValue(52,9) ,
-                //CreateValue(53,10) ,
-                //CreateValue(54,11) ,
-                //CreateValue(55,12) ,
-                //CreateValue(56,13) ,
-                //CreateValue(57,14) ,
-                //CreateValue(53,15) ,
+                CreateValue(64,4) ,
+                CreateValue(63,5) ,
+                CreateValue(87,6) ,
+                CreateValue(130,7) ,
+                CreateValue(14,8) ,
+                CreateValue(52,9) ,
+                CreateValue(53,10) ,
+                CreateValue(54,11) ,
+                CreateValue(55,12) ,
+                CreateValue(56,13) ,
+                CreateValue(57,14) ,
+                CreateValue(53,15) ,
                 CreateValue(64,16) };
             graphHolder.ShowGraph(listValue);
         }
