@@ -67,29 +67,6 @@ namespace RICHYEngine.LogCompat
             this.classTag = classTag;
         }
 
-        private void D( string message, [CallerMemberName] string caller = "")
-        {
-#if DEBUG
-            var log = $"{DateTime.Now.ToString("dd-MM-yyyy_HH:mm:ss:fff")}\tD\t{PROJECT_TAG}\t{classTag}\t{caller}\t{message}";
-            Debug.WriteLine(log);
-            LogWriter.WriteLine(log);
-#endif
-        }
-
-        private void I(string message, [CallerMemberName] string caller = "")
-        {
-            var log = $"{DateTime.Now.ToString("dd-MM-yyyy_HH:mm:ss:fff")}\tI\t{PROJECT_TAG}\t{classTag}\t{caller}\t{message}";
-            Debug.WriteLine(log);
-            LogWriter.WriteLine(log);
-        }
-
-        private void E( string message, [CallerMemberName] string caller = "")
-        {
-            var log = $"{DateTime.Now.ToString("dd-MM-yyyy_HH:mm:ss:fff")}\tE\t{PROJECT_TAG}\t{classTag}\t{caller}\t{message}";
-            Debug.WriteLine(log);
-            LogWriter.WriteLine(log);
-        }
-
         public static class RICHYEngine
         {
             private const string PROJECT_TAG = "RICHYEngine";
