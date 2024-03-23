@@ -24,7 +24,17 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         public override void MoveGraph(int offsetLeft, int offsetTop)
         {
             base.MoveGraph(offsetLeft, offsetTop);
-            UpdateDisplayRangeAndModifyElements(xPointDistance, xPointDistance);
+            var newStartIndex = GetStartPointIndex();
+            var newEndIndex = GetEndPointIndex();
+
+            if (newStartIndex >= mCurrentEndIndex && newEndIndex > newStartIndex)
+            {
+                UpdateDisplayRangeByRedraw();
+            }
+            else
+            {
+                UpdateDisplayRangeAndModifyElements(xPointDistance, xPointDistance, newStartIndex, newEndIndex);
+            }
         }
 
         public override void ShowGraph(List<IGraphPointValue> valueList)
@@ -92,11 +102,9 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 mGraphContainer.GraphHeight, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X);
         }
 
-        private void UpdateDisplayRangeAndModifyElements(float oldXDistance, float newXDistance)
+        private void UpdateDisplayRangeAndModifyElements(float oldXDistance, float newXDistance, int newStartIndex, int newEndIndex)
         {
-            Debug.WriteLine($"HUY -------------- UpdateDisplayRangeAndModifyElements: oldXDistance={oldXDistance},newXDistance={newXDistance}");
-            var newStartIndex = GetStartPointIndex();
-            var newEndIndex = GetEndPointIndex();
+            Debug.WriteLine($"HUY -------------- UpdateDisplayRangeAndModifyElements: oldXDistance={oldXDistance},newXDistance={newXDistance},newStartIndex={newStartIndex},newEndIndex={newEndIndex}");
             if (mCurrentShowingValueList == null || elementCache.lineConnectionDrawer == null)
             {
                 throw new Exception("Should not be null here");
