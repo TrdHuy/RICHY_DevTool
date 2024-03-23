@@ -191,19 +191,19 @@ namespace RICHY_DevTool.View.Widgets
         {
             if (sender == LeftBut)
             {
-                graphHolder.MoveGraph(-10, 0);
+                graphHolder.MoveGraph(-Convert.ToInt32(OffsetMove.Text), 0);
             }
             else if (sender == RightBut)
             {
-                graphHolder.MoveGraph(10, 0);
+                graphHolder.MoveGraph(Convert.ToInt32(OffsetMove.Text), 0);
             }
             else if (sender == UpBut)
             {
-                graphHolder.MoveGraph(0, 10);
+                graphHolder.MoveGraph(0, Convert.ToInt32(OffsetMove.Text));
             }
             else if (sender == DownBut)
             {
-                graphHolder.MoveGraph(0, -10);
+                graphHolder.MoveGraph(0, -Convert.ToInt32(OffsetMove.Text));
             }
             else if (sender == AddNewValueBut)
             {

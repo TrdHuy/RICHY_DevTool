@@ -51,16 +51,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 var oldXDistance = xPointDistance;
                 xPointDistance = newDistance;
-                //UpdateDisplayRangeAndModifyElements(oldXDistance, distance);
-                //RearrangePointAndConnection(oldXDistance, distance);
-                mCurrentStartIndex = GetStartPointIndex();
-                mCurrentEndIndex = GetEndPointIndex();
-                elementCache.pointDrawers.Clear();
-                elementCache.labelXDrawers.Clear();
-                mGraphContainer.LabelXCanvasHolder.Clear();
-                mGraphContainer.PointAndLineCanvasHolder.Clear();
-                SetupPointNConnectionNLabelX(mCurrentShowingValueList,
-                    mGraphContainer.GraphHeight, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X);
+                UpdateDisplayRangeByRedraw();
             }
         }
 
@@ -87,6 +78,19 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
         }
 
+        private void UpdateDisplayRangeByRedraw()
+        {
+            mCurrentStartIndex = GetStartPointIndex();
+            mCurrentEndIndex = GetEndPointIndex();
+            elementCache.pointDrawers.Clear();
+            elementCache.labelXDrawers.Clear();
+            mGraphContainer.LabelXCanvasHolder.Clear();
+            mGraphContainer.PointAndLineCanvasHolder.Clear();
+
+            if (mCurrentShowingValueList == null) return;
+            SetupPointNConnectionNLabelX(mCurrentShowingValueList,
+                mGraphContainer.GraphHeight, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X);
+        }
 
         private void UpdateDisplayRangeAndModifyElements(float oldXDistance, float newXDistance)
         {
