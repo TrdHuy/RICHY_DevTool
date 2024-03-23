@@ -8,7 +8,7 @@
 			 Loaded="UserControl_Loaded"
 			 d:DesignWidth="800">
 
-	<Grid Background="Wheat">
+	<Grid Background="Gray">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="10" />
@@ -25,6 +25,7 @@
 			  Height="450">
 			<Canvas x:Name="MainContainerCanvas"
 					Width="600"
+					ClipToBounds="False"
 					Background="DarkGray"
 					Height="400">
 				<Canvas x:Name="GridDashContainerCanvas"
@@ -157,6 +158,10 @@
 								  Click="Button_Click"
 								  Content="D"
 								  Grid.Column="1" />
+					<TextBox Grid.Row="1"
+							 Text="100"
+							 x:Name="OffsetMove"
+							 Grid.Column="1"/>
 				</Grid>
 			</Border>
 			<Button Content="Add New Value"
