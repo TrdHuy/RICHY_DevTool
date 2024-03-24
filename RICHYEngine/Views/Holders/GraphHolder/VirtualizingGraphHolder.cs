@@ -77,17 +77,11 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 graphPolyLineDrawer.SetUpVisual(targetElement: GraphElement.Line);
                 for (int i = mCurrentStartIndex; i < showingList.Count && i <= mCurrentEndIndex; i++)
                 {
-                    if (CheckIndexVisibilityByXDistance(i))
-                    {
-                        GenerateLabelX(showingList[i], displayOffsetY, displayOffsetX, i);
-                        GeneratePoint(showingList[i], i, graphHeight, graphPolyLineDrawer);
-                    }
-                    else
-                    {
-                        float xPos = GetXPosForPointBaseOnPointIndex(i);
-                        float yPos = GetYPosForPointBaseOnValue(showingList[i]);
-                        graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos), true);
-                    }
+                    var isShouldAddToParent = CheckIndexVisibilityByXDistance(i);
+                    GenerateLabelX(showingList[i], displayOffsetY, displayOffsetX, i,
+                        addToParent: isShouldAddToParent);
+                    GeneratePoint(showingList[i], i, graphHeight, graphPolyLineDrawer,
+                        addToParent: isShouldAddToParent);
                 }
             }
         }
@@ -166,8 +160,13 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 var startAddIndex = mCurrentStartIndex - 1 >= totalPointCount ? totalPointCount - 1 : mCurrentStartIndex - 1;
                 for (int i = startAddIndex; i >= newStartIndex && i < totalPointCount; i--)
                 {
-                    GeneratePoint(mCurrentShowingValueList[i], i, mGraphContainer.GraphHeight, elementCache.lineConnectionDrawer, toLast: false);
-                    GenerateLabelX(mCurrentShowingValueList[i], DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, i, toLast: false);
+                    var isShouldAddToParent = CheckIndexVisibilityByXDistance(i);
+                    GeneratePoint(mCurrentShowingValueList[i], i, mGraphContainer.GraphHeight, elementCache.lineConnectionDrawer,
+                        toLast: false,
+                        addToParent: isShouldAddToParent);
+                    GenerateLabelX(mCurrentShowingValueList[i], DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, i,
+                        toLast: false,
+                        addToParent: isShouldAddToParent);
                     D(TAG, $"Add i={i}");
                 }
                 mCurrentStartIndex = newStartIndex;
@@ -182,8 +181,13 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                         && i < totalPointCount
                         && i >= mCurrentStartIndex; i++)
                 {
-                    GeneratePoint(mCurrentShowingValueList[i], i, mGraphContainer.GraphHeight, elementCache.lineConnectionDrawer, toLast: true);
-                    GenerateLabelX(mCurrentShowingValueList[i], DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, i, toLast: true);
+                    var isShouldAddToParent = CheckIndexVisibilityByXDistance(i);
+                    GeneratePoint(mCurrentShowingValueList[i], i, mGraphContainer.GraphHeight, elementCache.lineConnectionDrawer,
+                        toLast: true,
+                        addToParent: isShouldAddToParent);
+                    GenerateLabelX(mCurrentShowingValueList[i], DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, i,
+                        toLast: true,
+                        addToParent: isShouldAddToParent);
                     D(TAG, $"Add i={i}");
                 }
                 mCurrentEndIndex = newEndIndex;

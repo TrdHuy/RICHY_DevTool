@@ -220,23 +220,25 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             float displayOffsetY,
             float displayOffsetX,
             int pointIndex,
-            bool toLast = true)
+            bool toLast = true,
+            bool addToParent = true)
         {
             var labelX = mGraphLabelGenerator.Invoke(GraphElement.LabelX);
-            if (mGraphContainer.LabelXCanvasHolder.AddChild(labelX))
+            if (addToParent)
             {
-                float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
-                labelX.SetUpVisual(GraphElement.LabelX);
-                labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
-                labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
-                if (toLast)
-                {
-                    elementCache.labelXDrawers.Add(labelX);
-                }
-                else
-                {
-                    elementCache.labelXDrawers.Insert(0, labelX);
-                }
+                mGraphContainer.LabelXCanvasHolder.AddChild(labelX);
+            }
+            float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
+            labelX.SetUpVisual(GraphElement.LabelX);
+            labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
+            labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
+            if (toLast)
+            {
+                elementCache.labelXDrawers.Add(labelX);
+            }
+            else
+            {
+                elementCache.labelXDrawers.Insert(0, labelX);
             }
         }
 
@@ -273,7 +275,10 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
 
 
-        protected virtual void GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight, IGraphPolyLineDrawer graphPolyLineDrawer, bool toLast = true)
+        protected virtual void GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight,
+            IGraphPolyLineDrawer graphPolyLineDrawer,
+            bool toLast = true,
+            bool addToParent = true)
         {
             //TODO: Current support to add new point at last index only
             //Debug.Assert(elementCache.pointDrawers.Count == pointIndex);
@@ -282,21 +287,21 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             float yPos = GetYPosForPointBaseOnValue(graphPointValue);
             IGraphPointDrawer point = mGraphPointGenerator.Invoke(GraphElement.Point);
             point.graphPointValue = graphPointValue;
-
-            if (mGraphContainer.PointAndLineCanvasHolder.AddChild(point))
+            if (addToParent)
             {
-                point.SetUpVisual(GraphElement.Point);
-                point.SetPositionOnCanvas(GraphElement.Point, new Vector2(xPos, yPos));
-                if (toLast)
-                {
-                    elementCache.pointDrawers.Add(point);
-                }
-                else
-                {
-                    elementCache.pointDrawers.Insert(0, point);
-                }
-                graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos), toLast);
+                mGraphContainer.PointAndLineCanvasHolder.AddChild(point);
             }
+            point.SetUpVisual(GraphElement.Point);
+            point.SetPositionOnCanvas(GraphElement.Point, new Vector2(xPos, yPos));
+            if (toLast)
+            {
+                elementCache.pointDrawers.Add(point);
+            }
+            else
+            {
+                elementCache.pointDrawers.Insert(0, point);
+            }
+            graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos), toLast);
         }
 
         /// <summary>
