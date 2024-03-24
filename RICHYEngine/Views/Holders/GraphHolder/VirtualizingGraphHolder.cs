@@ -45,6 +45,36 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             base.ShowGraph(valueList);
         }
 
+        public override int AddPointValue(IGraphPointValue newValue)
+        {
+            if (mCurrentShowingValueList != null)
+            {
+                mCurrentShowingValueList.Add(newValue);
+            }
+            else
+            {
+                mCurrentShowingValueList = new List<IGraphPointValue>();
+                mCurrentShowingValueList.Add(newValue);
+            }
+            var index = mCurrentShowingValueList.Count - 1;
+            var isShouldAddToParent = CheckIndexVisibilityByXDistance(index);
+            GenerateLabelX(newValue, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, index,
+                addToParent: isShouldAddToParent);
+            if (elementCache.lineConnectionDrawer == null)
+            {
+                IGraphPolyLineDrawer graphPolyLineDrawer = mGraphPolyLineGenerator.Invoke(GraphElement.Line);
+                elementCache.lineConnectionDrawer = graphPolyLineDrawer;
+                GeneratePoint(newValue, index, mGraphContainer.GraphHeight, graphPolyLineDrawer,
+                    addToParent: isShouldAddToParent);
+            }
+            else
+            {
+                GeneratePoint(newValue, index, mGraphContainer.GraphHeight,
+                    elementCache.lineConnectionDrawer,
+                    addToParent: isShouldAddToParent);
+            }
+            return index;
+        }
         public override void ChangeYMax(float newYMax)
         {
             if (yMax != newYMax)

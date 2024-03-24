@@ -166,6 +166,11 @@ namespace RICHY_DevTool.View.Widgets
                 CreateValue(80,15) ,
                // CreateValue(40,16) 
             };
+            Random r = new Random();
+            for (int i = 16; i < 1000; i++)
+            {
+                listValue.Add(CreateValue(r.Next(100, 140), i));
+            }
             graphHolder.ShowGraph(listValue);
         }
 
