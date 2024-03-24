@@ -57,6 +57,10 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 mCurrentShowingValueList.Add(newValue);
             }
             var index = mCurrentShowingValueList.Count - 1;
+            if (index > mCurrentEndIndex || index < mCurrentStartIndex)
+            {
+                return -1;
+            }
             var isShouldAddToParent = CheckIndexVisibilityByXDistance(index);
             GenerateLabelX(newValue, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, index,
                 addToParent: isShouldAddToParent);
@@ -305,19 +309,19 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 Debug.Assert(elementCache.pointDrawers.Count == 0);
             }
-            foreach (var p in elementCache.pointDrawers)
-            {
-                if (start == 0)
-                {
-                    temp = Convert.ToInt32(p.graphPointValue!.XValue);
-                }
-                else
-                {
-                    Debug.Assert(temp == Convert.ToInt32(p.graphPointValue!.XValue) - 1);
-                    temp = Convert.ToInt32(p.graphPointValue!.XValue);
-                }
-                start++;
-            }
+            //foreach (var p in elementCache.pointDrawers)
+            //{
+            //    if (start == 0)
+            //    {
+            //        temp = Convert.ToInt32(p.graphPointValue!.XValue);
+            //    }
+            //    else
+            //    {
+            //        Debug.Assert(temp == Convert.ToInt32(p.graphPointValue!.XValue) - 1);
+            //        temp = Convert.ToInt32(p.graphPointValue!.XValue);
+            //    }
+            //    start++;
+            //}
         }
     }
 
