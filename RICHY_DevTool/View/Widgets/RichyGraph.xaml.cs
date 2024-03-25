@@ -16,7 +16,7 @@ namespace RICHY_DevTool.View.Widgets
     /// </summary>
     public partial class RichyGraph : UserControl
     {
-        private GraphHolder graphHolder;
+        private VirtualizingGraphHolder graphHolder;
 
         public RichyGraph()
         {
@@ -59,6 +59,11 @@ namespace RICHY_DevTool.View.Widgets
                    throw new NotImplementedException();
                },
                graphPolyLineGenerator: (targetEle) => new GraphPolyLineImpl(PointAndLineContainerCanvas, new Polyline()));
+            graphHolder.GraphPosChanged += (oL, oT, nL, nT) =>
+            {
+                leftText.Text = nL.ToString();
+                topText.Text = nT.ToString();
+            };
         }
 
         private void ContainerGrid_MouseEnter(object sender, MouseEventArgs e)
@@ -166,11 +171,11 @@ namespace RICHY_DevTool.View.Widgets
                 CreateValue(80,15) ,
                // CreateValue(40,16) 
             };
-            Random r = new Random();
-            for (int i = 16; i < 1000; i++)
-            {
-                listValue.Add(CreateValue(r.Next(100, 140), i));
-            }
+            //Random r = new Random();
+            //for (int i = 16; i < 1000; i++)
+            //{
+            //    listValue.Add(CreateValue(r.Next(100, 140), i));
+            //}
             graphHolder.ShowGraph(listValue);
         }
 
@@ -228,6 +233,13 @@ namespace RICHY_DevTool.View.Widgets
                 var newDistance = Convert.ToInt32(XDistanceBox.Text);
                 graphHolder?.ChangeXDistance((int)newDistance);
             }
+        }
+
+        private void ControlCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var mousePos = e.GetPosition(MainContainerCanvas);
+            var reverseMouse = new Vector2((float)mousePos.X, (float)(MainContainerCanvas.ActualHeight - mousePos.Y));
+            graphHolder?.ChangeZoomX(e.Delta > 0 ? 10 : -10, reverseMouse);
         }
     }
 
