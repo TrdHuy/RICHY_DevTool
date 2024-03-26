@@ -52,6 +52,7 @@
 			<Canvas x:Name="ControlCanvas"
 					Background="Transparent"
 					MouseMove="ContainerCanvas_MouseMove"
+					MouseWheel="ControlCanvas_MouseWheel"
 					Width="{Binding ElementName=MainContainerCanvas, Path=ActualWidth}"
 					Height="{Binding ElementName=MainContainerCanvas, Path=ActualHeight}">
 				<TextBlock x:Name="CoorText"
@@ -127,42 +128,57 @@
 			</Border>
 			<Border BorderThickness="1"
 					BorderBrush="Black"
-					Width="90"
+					Width="150"
 					Height="90">
 				<Grid>
 					<Grid.ColumnDefinitions>
-						<ColumnDefinition />
-						<ColumnDefinition />
+						<ColumnDefinition Width="90"/>
 						<ColumnDefinition />
 					</Grid.ColumnDefinitions>
-					<Grid.RowDefinitions>
-						<RowDefinition />
-						<RowDefinition />
-						<RowDefinition />
-					</Grid.RowDefinitions>
-					<RepeatButton Grid.Row="1"
-								  Click="Button_Click"
-								  x:Name="LeftBut"
-								  Content="L" />
-					<RepeatButton Grid.Row="1"
-								  x:Name="RightBut"
-								  Content="R"
-								  Click="Button_Click"
-								  Grid.Column="2" />
-					<RepeatButton Grid.Column="1"
-								  x:Name="UpBut"
-								  Content="U"
-								  Click="Button_Click" />
-					<RepeatButton Grid.Row="2"
-								  x:Name="DownBut"
-								  Click="Button_Click"
-								  Content="D"
-								  Grid.Column="1" />
-					<TextBox Grid.Row="1"
-							 Text="100"
-							 x:Name="OffsetMove"
-							 Grid.Column="1"/>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition />
+							<ColumnDefinition />
+							<ColumnDefinition />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition />
+							<RowDefinition />
+							<RowDefinition />
+						</Grid.RowDefinitions>
+						<RepeatButton Grid.Row="1"
+									  Click="Button_Click"
+									  x:Name="LeftBut"
+									  Content="L" />
+						<RepeatButton Grid.Row="1"
+									  x:Name="RightBut"
+									  Content="R"
+									  Click="Button_Click"
+									  Grid.Column="2" />
+						<RepeatButton Grid.Column="1"
+									  x:Name="UpBut"
+									  Content="U"
+									  Click="Button_Click" />
+						<RepeatButton Grid.Row="2"
+									  x:Name="DownBut"
+									  Click="Button_Click"
+									  Content="D"
+									  Grid.Column="1" />
+						<TextBox Grid.Row="1"
+								 Text="100"
+								 x:Name="OffsetMove"
+								 Grid.Column="1" />
+					</Grid>
+
+					<TextBlock Grid.Column="1">
+						<Run Text="Top:" />
+						<Run x:Name="topText"/>
+						<LineBreak />
+						<Run Text="Left:" />
+						<Run x:Name="leftText" />
+					</TextBlock>
 				</Grid>
+			
 			</Border>
 			<Button Content="Add New Value"
 					x:Name="AddNewValueBut"

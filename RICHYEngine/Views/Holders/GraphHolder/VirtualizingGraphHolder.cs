@@ -89,6 +89,31 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
         }
 
+        public void ChangeZoomX(float offset, Vector2 mousePos)
+        {
+            var temp = xPointDistance + offset;
+            var newDistance = temp < 1 ? 1 : temp;
+            if (mCurrentShowingValueList != null && xPointDistance != newDistance)
+            {
+                var startVisibilityRange = GetXPosForPointCanvas();
+                var endVisibilityRange = (mCurrentShowingValueList.Count - 1) * xPointDistance + startVisibilityRange;
+                var isIntersectWithGraphLine = mousePos.X >= startVisibilityRange && mousePos.X <= endVisibilityRange;
+                if (isIntersectWithGraphLine)
+                {
+                    var pointIndex = GetPointIndexViaMousePos(mousePos);
+                    var oldPos = pointIndex * xPointDistance;
+                    ChangeXDistance(newDistance);
+                    var newPos = pointIndex * xPointDistance;
+                    var pointMovedOffset = newPos - oldPos;
+                    MoveGraph(-(int)pointMovedOffset, 0);
+                }
+                else
+                {
+                    ChangeXDistance(newDistance);
+                }
+            }
+        }
+
         public override void ChangeXDistance(float distance)
         {
             var newDistance = distance < 1 ? 1 : distance;
@@ -593,14 +618,14 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         private bool CheckIndexVisibilityByXDistance(int realIndex)
         {
-            D(TAG, $"xPointDistance={xPointDistance}");
+            //D(TAG, $"xPointDistance={xPointDistance}");
             var x = (int)(MINIMUM_BETWEEN_TWO_POINTS / xPointDistance);
             if (MINIMUM_BETWEEN_TWO_POINTS % xPointDistance != 0)
             {
                 x++;
             }
             var result = realIndex % x == 0;
-            D(TAG, $"result={result}");
+           // D(TAG, $"result={result}");
             return result;
         }
         private void assert()

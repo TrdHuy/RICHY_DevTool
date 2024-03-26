@@ -12,6 +12,9 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             holder.AddChild(child);
         }
     }
+
+    public delegate void GraphPosChanged(int oldLeft, int oldTop,int newLeft, int newTop);
+
     public class GraphHolder
     {
         protected class GraphElementCache
@@ -29,6 +32,8 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 labelYDrawers.Clear();
             }
         }
+        public event GraphPosChanged? GraphPosChanged;
+
         protected const float dashDistanceY = 50f;
         protected const float dashDistanceX = 50f;
         protected const float DISPLAY_OFFSET_Y = 30f;
@@ -106,6 +111,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 InvalidateLabelY(mGraphContainer.GraphHeight, dashDistanceY);
             }
+            GraphPosChanged?.Invoke(mPointCanvasHolderLeft - offsetLeft, mPointCanvasHolderTop - offsetTop, mPointCanvasHolderLeft, mPointCanvasHolderTop);
         }
 
         public virtual void ChangeYMax(float offset)
@@ -180,6 +186,25 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                     elementCache.labelYDrawers.Add(labelY);
                 }
 
+            }
+        }
+
+        protected int GetPointIndexViaMousePos(Vector2 mousePos)
+        {
+            if (mCurrentShowingValueList == null) return -1;
+
+            var startVisibilityRange = GetXPosForPointCanvas();
+            var endVisibilityRange = (mCurrentShowingValueList.Count - 1) * xPointDistance + startVisibilityRange;
+            if(mousePos.X < startVisibilityRange)
+            {
+                return 0;
+            }else if(mousePos.X > endVisibilityRange)
+            {
+                return mCurrentShowingValueList.Count - 1;
+            }
+            else
+            {
+                return (int)Math.Round((mousePos.X - startVisibilityRange) / xPointDistance);
             }
         }
 
