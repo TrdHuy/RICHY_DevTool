@@ -2,9 +2,17 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Numerics;
+using static RICHYEngine.LogCompat.Logger.RICHYEngineLogger;
 
 namespace RICHYEngine.Views.Holders.GraphHolder
 {
+    public interface IRectDrawer : ISingleCanvasElement
+    {
+        void SetRectSize(float width, float height);
+
+        Vector2 GetRectSize();
+    }
+
     internal static class HolderExtension
     {
         public static void AddChildInternal(this ICanvasHolder holder, ICanvasChild child)
@@ -13,7 +21,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
     }
 
-    public delegate void GraphPosChanged(int oldLeft, int oldTop,int newLeft, int newTop);
+    public delegate void GraphPosChanged(int oldLeft, int oldTop, int newLeft, int newTop);
 
     public class GraphHolder
     {
@@ -24,15 +32,24 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             public Collection<IGraphLabelDrawer> labelXDrawers = new Collection<IGraphLabelDrawer>();
             public Collection<IGraphLabelDrawer> labelYDrawers = new Collection<IGraphLabelDrawer>();
 
+            #region Popup cache
+            public IGraphLabelDrawer? pointDetailLabelCache = null;
+            public Vector2 pointDetailMousePos = Vector2.Zero;
+            #endregion
+
             public void Clear()
             {
                 lineConnectionDrawer = null;
                 pointDrawers.Clear();
                 labelXDrawers.Clear();
                 labelYDrawers.Clear();
+
+                pointDetailLabelCache = null;
+                pointDetailMousePos = Vector2.Zero;
             }
         }
         public event GraphPosChanged? GraphPosChanged;
+        private const string TAG = "GraphHolder";
 
         protected const float dashDistanceY = 50f;
         protected const float dashDistanceX = 50f;
@@ -47,6 +64,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         protected Func<GraphElement, IGraphLineDrawer> mGraphLineGenerator;
         protected Func<GraphElement, IGraphPolyLineDrawer> mGraphPolyLineGenerator;
         protected Func<GraphElement, IGraphLabelDrawer> mGraphLabelGenerator;
+        protected Func<GraphElement, IRectDrawer> mRectGenerator;
 
         protected GraphElementCache elementCache = new GraphElementCache();
         protected List<IGraphPointValue>? mCurrentShowingValueList;
@@ -59,15 +77,68 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             , Func<GraphElement, IGraphPointDrawer> graphPointGenerator
             , Func<GraphElement, IGraphLineDrawer> graphLineGenerator
             , Func<GraphElement, IGraphLabelDrawer> graphLabelGenerator
-            , Func<GraphElement, IGraphPolyLineDrawer> graphPolyLineGenerator)
+            , Func<GraphElement, IGraphPolyLineDrawer> graphPolyLineGenerator
+            , Func<GraphElement, IRectDrawer> rectGenerator)
         {
             mGraphContainer = graphContainer;
             mGraphPointGenerator = graphPointGenerator;
             mGraphLineGenerator = graphLineGenerator;
             mGraphLabelGenerator = graphLabelGenerator;
             mGraphPolyLineGenerator = graphPolyLineGenerator;
+            mRectGenerator = rectGenerator;
         }
+
         #region public API
+        public void ShowPointDetail(bool isShowing, Vector2 mousePos)
+        {
+            const int CONTENT_PADDING = 10;
+
+            if (!isShowing)
+            {
+                elementCache.pointDetailLabelCache = null;
+                mGraphContainer.PopupCanvasHolder.Clear();
+                return;
+            }
+            if (mCurrentShowingValueList == null ||
+                    (elementCache.pointDetailLabelCache != null &&
+                        elementCache.pointDetailMousePos == mousePos))
+            {
+                return;
+            }
+
+            var pointIndex = GetPointIndexViaMousePos(mousePos);
+            if (pointIndex == -1)
+            {
+                return;
+            }
+            mGraphContainer.PopupCanvasHolder.Clear();
+            var content = $"Value={mCurrentShowingValueList[pointIndex].YValue}\nX={pointIndex}";
+
+            var label = mGraphLabelGenerator.Invoke(GraphElement.Etc);
+            label.SetUpVisual(GraphElement.Etc);
+            label.SetText(content);
+            label.SetPositionOnCanvas(GraphElement.Etc, new Vector2(CONTENT_PADDING, CONTENT_PADDING + label.DesiredHeight) + mousePos);
+            var backgroundEle = mRectGenerator.Invoke(GraphElement.Etc);
+            var bgWidth = label.DesiredWidth + CONTENT_PADDING * 2;
+            var bgHeight = label.DesiredHeight + CONTENT_PADDING * 2;
+
+            backgroundEle.SetUpVisual(GraphElement.Etc);
+            backgroundEle.SetPositionOnCanvas(GraphElement.Etc, new Vector2(0, bgHeight) + mousePos);
+            backgroundEle.SetRectSize(bgWidth, bgHeight);
+
+            var pointPos = GetPointPosOnMainCanvas(pointIndex);
+            var point = mGraphPointGenerator.Invoke(GraphElement.Etc);
+            point.SetUpVisual(GraphElement.Etc);
+            point.graphPointValue = mCurrentShowingValueList[pointIndex];
+            point.SetPositionOnCanvas(GraphElement.Etc, pointPos);
+            mGraphContainer.PopupCanvasHolder.AddChild(point);
+            mGraphContainer.PopupCanvasHolder.AddChild(backgroundEle);
+            mGraphContainer.PopupCanvasHolder.AddChild(label);
+
+            elementCache.pointDetailLabelCache = label;
+            elementCache.pointDetailMousePos = mousePos;
+        }
+
         public float GetYValueAtMouse(Vector2 mousePos)
         {
             var rate = yMax / mGraphContainer.GraphHeight;
@@ -169,6 +240,17 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
         #endregion
 
+        protected Vector2 GetPointPosOnMainCanvas(int pointIndex)
+        {
+            if (mCurrentShowingValueList == null || pointIndex >= mCurrentShowingValueList.Count)
+            {
+                return Vector2.Zero;
+            }
+            var xPos = GetXPosForPointBaseOnPointIndex(pointIndex) + GetXPosForPointCanvas();
+            var yPos = GetYPosForPointBaseOnValue(mCurrentShowingValueList[pointIndex]) + GetYPosForPointCanvas();
+            return new Vector2(xPos, yPos);
+        }
+
         private void SetUpLabelY(float graphHeight, float dashYDistance, float displayOffsetX, float displayOffsetY)
         {
             mGraphContainer.LabelYCanvasHolder.SetCanvasPosition(new Vector2(GetPosXForLabelYCanvas(), GetYPosForLabelYCanvas()));
@@ -195,10 +277,11 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
             var startVisibilityRange = GetXPosForPointCanvas();
             var endVisibilityRange = (mCurrentShowingValueList.Count - 1) * xPointDistance + startVisibilityRange;
-            if(mousePos.X < startVisibilityRange)
+            if (mousePos.X < startVisibilityRange)
             {
                 return 0;
-            }else if(mousePos.X > endVisibilityRange)
+            }
+            else if (mousePos.X > endVisibilityRange)
             {
                 return mCurrentShowingValueList.Count - 1;
             }

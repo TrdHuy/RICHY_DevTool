@@ -8,6 +8,6 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 {
     public enum GraphElement
     {
-        Ox, Oy, Point, Line, LabelX, LabelY, DashX, DashY
+        Ox, Oy, Point, Line, LabelX, LabelY, DashX, DashY, Etc
     }
 }
