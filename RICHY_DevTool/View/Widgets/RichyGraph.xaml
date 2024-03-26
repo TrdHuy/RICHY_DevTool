@@ -48,6 +48,10 @@
 						Width="600"
 						Height="400">
 				</Canvas>
+				<Canvas x:Name="PopupContainerCanvas"
+						Width="600"
+						Height="400">
+				</Canvas>
 			</Canvas>
 			<Canvas x:Name="ControlCanvas"
 					Background="Transparent"

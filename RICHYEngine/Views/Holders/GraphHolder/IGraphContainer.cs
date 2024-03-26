@@ -7,6 +7,7 @@
         ICanvasHolder LabelYCanvasHolder { get; }
         ICanvasHolder AxisCanvasHolder { get; }
         ICanvasHolder GridDashCanvasHolder { get; }
+        ICanvasHolder PopupCanvasHolder { get; }
         public float GraphHeight { get; }
         public float GraphWidth { get; }
 

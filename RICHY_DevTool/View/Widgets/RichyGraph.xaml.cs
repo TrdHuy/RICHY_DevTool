@@ -28,9 +28,15 @@ namespace RICHY_DevTool.View.Widgets
                     mLabelXCanvas: LabelXContainerCanvas,
                     mLabelYCanvas: LabelYContainerCanvas,
                     mAxisCanvas: AxisContainerCanvas,
-                    mGridDashCanvas: GridDashContainerCanvas),
-               graphPointGenerator: (targetEle) => new GraphPointImpl(PointAndLineContainerCanvas, new Ellipse(), pointSize),
-               graphLineGenerator: (targetEle) =>
+                    mGridDashCanvas: GridDashContainerCanvas,
+                    mPopupCanvas: PopupContainerCanvas),
+               graphPointGenerator: (targetEle) =>
+               {
+                   if (targetEle == GraphElement.Etc)
+                       return new GraphPointImpl(PopupContainerCanvas, new Ellipse(), pointSize);
+                   return new GraphPointImpl(PointAndLineContainerCanvas, new Ellipse(), pointSize);
+               },
+                graphLineGenerator: (targetEle) =>
                {
                    if (targetEle == GraphElement.Line)
                    {
@@ -56,9 +62,21 @@ namespace RICHY_DevTool.View.Widgets
                    {
                        return new GraphLabelImpl(LabelYContainerCanvas, new TextBlock());
                    }
+                   else if (targetEle == GraphElement.Etc)
+                   {
+                       return new GraphLabelImpl(PopupContainerCanvas, new TextBlock());
+                   }
                    throw new NotImplementedException();
                },
-               graphPolyLineGenerator: (targetEle) => new GraphPolyLineImpl(PointAndLineContainerCanvas, new Polyline()));
+               graphPolyLineGenerator: (targetEle) => new GraphPolyLineImpl(PointAndLineContainerCanvas, new Polyline()),
+               rectGenerator: (targetEle) =>
+               {
+                   if (targetEle == GraphElement.Etc)
+                   {
+                       return new RectDrawerImpl(PopupContainerCanvas, new Rectangle());
+                   }
+                   throw new NotImplementedException();
+               });
             graphHolder.GraphPosChanged += (oL, oT, nL, nT) =>
             {
                 leftText.Text = nL.ToString();
@@ -86,6 +104,10 @@ namespace RICHY_DevTool.View.Widgets
                 ReverseCoorText.Visibility = Visibility.Hidden;
                 IndexText.Visibility = Visibility.Hidden;
             }
+            if (e.Key == Key.D)
+            {
+                graphHolder.ShowPointDetail(isShowing: false, Vector2.Zero);
+            }
         }
 
         private void ContainerGrid_KeyDown(object sender, KeyEventArgs e)
@@ -107,6 +129,12 @@ namespace RICHY_DevTool.View.Widgets
                     IndexText.Visibility = Visibility.Visible;
                 }
                 ShowCoor();
+            }
+            else if (e.Key == Key.D)
+            {
+                var mousePos = Mouse.GetPosition(MainContainerCanvas);
+                var reversePos = new Vector2((float)mousePos.X, (float)(MainContainerCanvas.ActualHeight - mousePos.Y));
+                graphHolder.ShowPointDetail(isShowing: true, reversePos);
             }
         }
 
@@ -171,11 +199,11 @@ namespace RICHY_DevTool.View.Widgets
                 CreateValue(80,15) ,
                // CreateValue(40,16) 
             };
-            //Random r = new Random();
-            //for (int i = 16; i < 1000; i++)
-            //{
-            //    listValue.Add(CreateValue(r.Next(100, 140), i));
-            //}
+            Random r = new Random();
+            for (int i = 16; i < 1000; i++)
+            {
+                listValue.Add(CreateValue(r.Next(100, 140), i));
+            }
             graphHolder.ShowGraph(listValue);
         }
 
@@ -386,7 +414,14 @@ namespace RICHY_DevTool.View.Widgets
         {
             mPoint.Width = mPointSize.X;
             mPoint.Height = mPointSize.Y;
-            mPoint.Fill = Brushes.Wheat;
+            if (targetElement == GraphElement.Etc)
+            {
+                mPoint.Fill = Brushes.Green;
+            }
+            else
+            {
+                mPoint.Fill = Brushes.Wheat;
+            }
         }
 
     }
@@ -459,13 +494,15 @@ namespace RICHY_DevTool.View.Widgets
         private ICanvasHolder mLabelYCanvasHolder;
         private ICanvasHolder mAxisCanvasHolder;
         private ICanvasHolder mGridDashCanvasHolder;
+        private ICanvasHolder mPopupCanvasHolder;
 
         public GraphContainerImpl(Canvas mContainerCanvas,
             Canvas mPointContainerCanvas,
             Canvas mLabelXCanvas,
             Canvas mLabelYCanvas,
             Canvas mAxisCanvas,
-            Canvas mGridDashCanvas)
+            Canvas mGridDashCanvas,
+            Canvas mPopupCanvas)
         {
             this.mContainerCanvas = mContainerCanvas;
             mPointContainerCanvasHolder = new CanvasHolderImpl(mPointContainerCanvas, mContainerCanvas);
@@ -473,6 +510,7 @@ namespace RICHY_DevTool.View.Widgets
             mLabelYCanvasHolder = new CanvasHolderImpl(mLabelYCanvas, mContainerCanvas);
             mAxisCanvasHolder = new CanvasHolderImpl(mAxisCanvas, mContainerCanvas);
             mGridDashCanvasHolder = new CanvasHolderImpl(mGridDashCanvas, mContainerCanvas);
+            mPopupCanvasHolder = new CanvasHolderImpl(mPopupCanvas, mContainerCanvas);
         }
 
         public float GraphHeight => (float)mContainerCanvas.ActualHeight;
@@ -488,6 +526,8 @@ namespace RICHY_DevTool.View.Widgets
         public ICanvasHolder AxisCanvasHolder => mAxisCanvasHolder;
 
         public ICanvasHolder GridDashCanvasHolder => mGridDashCanvasHolder;
+
+        public ICanvasHolder PopupCanvasHolder => mPopupCanvasHolder;
     }
     public class GraphPolyLineImpl : BaseCanvasChild, IGraphPolyLineDrawer
     {
@@ -546,6 +586,33 @@ namespace RICHY_DevTool.View.Widgets
             mPolyLine.Points.Remove(new Point(reversePos.X, reversePos.Y));
         }
     }
+
+    public class RectDrawerImpl : SingleElementImpl, IRectDrawer
+    {
+        public override UIElement Child => mRect;
+        private Rectangle mRect;
+        public RectDrawerImpl(Canvas container, Rectangle rect) : base(container)
+        {
+            mRect = rect;
+        }
+
+        public override void SetUpVisual(GraphElement targetElement)
+        {
+            mRect.Fill = Brushes.Red;
+        }
+
+        public void SetRectSize(float width, float height)
+        {
+            mRect.Width = width;
+            mRect.Height = height;
+        }
+
+        public Vector2 GetRectSize()
+        {
+            return new Vector2((float)mRect.ActualWidth, (float)mRect.ActualHeight);
+        }
+    }
+
     public class GraphLabelImpl : SingleElementImpl, IGraphLabelDrawer
     {
         public override UIElement Child => TextBlock;
