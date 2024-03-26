@@ -89,50 +89,6 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
 
         #region public API
-        public void ShowPointDetailOnLine(bool isShowing, Vector2 mousePos)
-        {
-            const int CONTENT_PADDING = 10;
-
-            if (!isShowing)
-            {
-                elementCache.pointDetailLabelCache = null;
-                mGraphContainer.PopupCanvasHolder.Clear();
-                return;
-            }
-            if (mCurrentShowingValueList == null ||
-                    (elementCache.pointDetailLabelCache != null &&
-                        elementCache.pointDetailMousePos == mousePos))
-            {
-                return;
-            }
-
-            var pointIndex = GetDecimalPointIndexViaMousePos(mousePos);
-            var roundedPointIndex = (int)Math.Round(pointIndex);
-            if (pointIndex == -1)
-            {
-                return;
-            }
-            mGraphContainer.PopupCanvasHolder.Clear();
-            var content = $"Value={mCurrentShowingValueList[roundedPointIndex].YValue}\nX={roundedPointIndex}";
-
-            var label = mGraphLabelGenerator.Invoke(GraphElement.Etc);
-            label.SetUpVisual(GraphElement.Etc);
-            label.SetText(content);
-            label.SetPositionOnCanvas(GraphElement.Etc, new Vector2(CONTENT_PADDING, CONTENT_PADDING + label.DesiredHeight) + mousePos);
-            var backgroundEle = mRectGenerator.Invoke(GraphElement.Etc);
-            mGraphContainer.PopupCanvasHolder.AddChild(backgroundEle);
-            var bgWidth = label.DesiredWidth + CONTENT_PADDING * 2;
-            var bgHeight = label.DesiredHeight + CONTENT_PADDING * 2;
-
-            backgroundEle.SetUpVisual(GraphElement.Etc);
-            backgroundEle.SetPositionOnCanvas(GraphElement.Etc, new Vector2(0, bgHeight) + mousePos);
-            backgroundEle.SetRectSize(bgWidth, bgHeight);
-            mGraphContainer.PopupCanvasHolder.AddChild(label);
-
-            elementCache.pointDetailLabelCache = label;
-            elementCache.pointDetailMousePos = mousePos;
-        }
-
         public void ShowPointDetail(bool isShowing, Vector2 mousePos)
         {
             const int CONTENT_PADDING = 10;
@@ -332,26 +288,6 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             else
             {
                 return (int)Math.Round((mousePos.X - startVisibilityRange) / xPointDistance);
-            }
-        }
-
-        protected float GetDecimalPointIndexViaMousePos(Vector2 mousePos)
-        {
-            if (mCurrentShowingValueList == null) return -1;
-
-            var startVisibilityRange = GetXPosForPointCanvas();
-            var endVisibilityRange = (mCurrentShowingValueList.Count - 1) * xPointDistance + startVisibilityRange;
-            if (mousePos.X < startVisibilityRange)
-            {
-                return 0;
-            }
-            else if (mousePos.X > endVisibilityRange)
-            {
-                return mCurrentShowingValueList.Count - 1;
-            }
-            else
-            {
-                return (mousePos.X - startVisibilityRange) / xPointDistance;
             }
         }
 
