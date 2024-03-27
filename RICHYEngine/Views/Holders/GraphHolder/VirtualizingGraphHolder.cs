@@ -7,7 +7,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
     public class VirtualizingGraphHolder : GraphHolder
     {
         private const string TAG = "VirtualizingGraphHolder";
-        private const float MINIMUM_BETWEEN_TWO_POINTS = 60f;
+        private const float MINIMUM_BETWEEN_TWO_POINTS = 90f;
         protected int mCurrentStartIndex = 0;
         protected int mCurrentEndIndex = 0;
 

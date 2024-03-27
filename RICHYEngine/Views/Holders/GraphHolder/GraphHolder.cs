@@ -112,8 +112,12 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 return;
             }
             mGraphContainer.PopupCanvasHolder.Clear();
-            var content = $"Value={mCurrentShowingValueList[pointIndex].YValue}\nX={pointIndex}";
-
+            var content = $"Value={mCurrentShowingValueList[pointIndex].YValue}";
+            var xValue = mCurrentShowingValueList[pointIndex].XValue;
+            if (xValue is DateTime)
+            {
+                content += $"\nX={((DateTime)xValue).ToString("U")}";
+            }
             var label = mGraphLabelGenerator.Invoke(GraphElement.Etc);
             label.SetUpVisual(GraphElement.Etc);
             label.SetText(content);
@@ -338,7 +342,15 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
             float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
             labelX.SetUpVisual(GraphElement.LabelX);
-            labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
+            var xValue = pointValue.XValue;
+            if (xValue is DateTime && xValue != null)
+            {
+                labelX.SetText(((DateTime)xValue).ToString("m"));
+            }
+            else
+            {
+                labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
+            }
             labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
             if (toLast)
             {

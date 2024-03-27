@@ -180,34 +180,16 @@ namespace RICHY_DevTool.View.Widgets
 
         private void showGraph()
         {
-            var listValue = new List<IGraphPointValue>() {
-                CreateValue(0,0),
-                CreateValue(5,1) ,
-                CreateValue(10,2) ,
-                CreateValue(20,3) ,
-                CreateValue(25,4) ,
-                CreateValue(30,5) ,
-                CreateValue(35,6) ,
-                CreateValue(40,7) ,
-                CreateValue(45,8) ,
-                CreateValue(50,9) ,
-                CreateValue(55,10) ,
-                CreateValue(60,11) ,
-                CreateValue(65,12) ,
-                CreateValue(70,13) ,
-                CreateValue(75,14) ,
-                CreateValue(80,15) ,
-               // CreateValue(40,16) 
-            };
+            var listValue = new List<IGraphPointValue>();
             Random r = new Random();
-            for (int i = 16; i < 1000; i++)
+            for (int i = 0; i < 1000; i++)
             {
-                listValue.Add(CreateValue(r.Next(100, 140), i));
+                listValue.Add(CreateValue(r.Next(5, 140), DateTime.Now.AddDays(i)));
             }
             graphHolder.ShowGraph(listValue);
         }
 
-        IGraphPointValue CreateValue(int yValue, int xValue)
+        IGraphPointValue CreateValue(int yValue, DateTime xValue)
         {
             return new GraphPointValueImpl(yValue, xValue);
         }
@@ -246,7 +228,7 @@ namespace RICHY_DevTool.View.Widgets
             else if (sender == AddNewValueBut)
             {
                 Random r = new Random();
-                graphHolder.AddPointValue(CreateValue(r.Next(0, 200), 100));
+                graphHolder.AddPointValue(CreateValue(r.Next(0, 200), DateTime.Now));
             }
             else if (sender == Refresh)
             {
@@ -267,19 +249,19 @@ namespace RICHY_DevTool.View.Widgets
         {
             var mousePos = e.GetPosition(MainContainerCanvas);
             var reverseMouse = new Vector2((float)mousePos.X, (float)(MainContainerCanvas.ActualHeight - mousePos.Y));
-            graphHolder?.ChangeZoomX(e.Delta > 0 ? 10 : -10, reverseMouse);
+            graphHolder?.ChangeZoomX(e.Delta > 0 ? 1 : -1, reverseMouse);
         }
     }
 
     public class GraphPointValueImpl : IGraphPointValue
     {
         private int yValue;
-        private int xValue;
+        private DateTime xValue;
         public int YValue => yValue;
 
         public object XValue => xValue;
 
-        public GraphPointValueImpl(int yValue, int xValue)
+        public GraphPointValueImpl(int yValue, DateTime xValue)
         {
             this.yValue = yValue;
             this.xValue = xValue;
@@ -631,6 +613,10 @@ namespace RICHY_DevTool.View.Widgets
             if (targetElement == GraphElement.LabelY)
             {
                 SetPosStartFromLeft(new Vector2(position.X + 5, position.Y + 20));
+            }
+            else if (targetElement == GraphElement.LabelX)
+            {
+                SetReversePos(position - new Vector2(DesiredWidth / 2, 0), TextBlock);
             }
             else
             {
