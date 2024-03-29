@@ -557,6 +557,13 @@ namespace RICHY_DevTool.View.Widgets
             mPolyLine.Points[oldPointIndex] = newPoint;
         }
 
+        public void ChangePointPosition(int pointIndex, Vector2 newPos)
+        {
+            var reverseNewPos = GetReversePosForPoint(newPos);
+            var newPoint = new Point(reverseNewPos.X, reverseNewPos.Y);
+            mPolyLine.Points[pointIndex] = newPoint;
+        }
+
         public void RemovePoint(int pointIndex)
         {
             mPolyLine.Points.RemoveAt(pointIndex);
@@ -567,6 +574,7 @@ namespace RICHY_DevTool.View.Widgets
             var reversePos = GetReversePosForPoint(point);
             mPolyLine.Points.Remove(new Point(reversePos.X, reversePos.Y));
         }
+
     }
 
     public class RectDrawerImpl : SingleElementImpl, IRectDrawer

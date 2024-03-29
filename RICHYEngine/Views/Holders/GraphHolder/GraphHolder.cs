@@ -37,6 +37,10 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             public Vector2 pointDetailMousePos = Vector2.Zero;
             #endregion
 
+            #region Animation cache
+            public SemaphoreSlim addingNewValueSemaphore = new SemaphoreSlim(1, 1);
+            #endregion
+
             public void Clear()
             {
                 lineConnectionDrawer = null;

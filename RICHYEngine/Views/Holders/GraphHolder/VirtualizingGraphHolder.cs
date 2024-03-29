@@ -46,7 +46,58 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             mCurrentEndIndex = GetEndPointIndex();
             base.ShowGraph(valueList);
         }
+        public async void AddPointValueWithAnimation(IGraphPointValue newValue)
+        {
+            try
+            {
+                await elementCache.addingNewValueSemaphore.WaitAsync();
+                if (mCurrentShowingValueList != null)
+                {
+                    mCurrentShowingValueList.Add(newValue);
+                }
+                else
+                {
+                    mCurrentShowingValueList = new List<IGraphPointValue>();
+                    mCurrentShowingValueList.Add(newValue);
+                }
 
+                var index = mCurrentShowingValueList.Count - 1;
+                if (index > mCurrentEndIndex || index < mCurrentStartIndex)
+                {
+                    return;
+                }
+                var isShouldAddToParent = CheckIndexVisibilityByXDistance(index);
+                GenerateLabelX(newValue, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, index,
+                    addToParent: isShouldAddToParent);
+                if (elementCache.lineConnectionDrawer == null)
+                {
+                    IGraphPolyLineDrawer graphPolyLineDrawer = mGraphPolyLineGenerator.Invoke(GraphElement.Line);
+                    elementCache.lineConnectionDrawer = graphPolyLineDrawer;
+                    GeneratePoint(newValue, index, mGraphContainer.GraphHeight, graphPolyLineDrawer,
+                        addToParent: isShouldAddToParent);
+                }
+                else
+                {
+                    GeneratePoint(newValue, index, mGraphContainer.GraphHeight,
+                        elementCache.lineConnectionDrawer,
+                        addToParent: isShouldAddToParent);
+                }
+            }
+            finally
+            {
+                elementCache.addingNewValueSemaphore.Release();
+            }
+        }
+
+        private async Task MovePointToward(Vector2 fromPos,
+            Vector2 toPos, 
+            int durationMs,
+            IGraphPointDrawer targetPoint,
+            IGraphPolyLineDrawer targetLine,
+            int pointIndexOnPolyLine)
+        {
+
+        }
         public override int AddPointValue(IGraphPointValue newValue)
         {
             if (mCurrentShowingValueList != null)

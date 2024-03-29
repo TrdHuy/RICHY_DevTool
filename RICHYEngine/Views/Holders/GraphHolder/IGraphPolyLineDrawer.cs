@@ -14,6 +14,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         void RemovePoint(Vector2 point);
 
         void ChangePointPosition(Vector2 oldPos, Vector2 newPos);
+        void ChangePointPosition(int pointIndex, Vector2 newPos);
 
         int TotalPointCount { get; }
 
