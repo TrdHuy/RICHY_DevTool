@@ -6,14 +6,33 @@
 			 xmlns:local="clr-namespace:RICHY_DevTool.View.Widgets"
 			 mc:Ignorable="d"
 			 Loaded="UserControl_Loaded"
-			 d:DesignWidth="800">
+			 d:DesignWidth="1000">
 
 	<Grid Background="Gray">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="*" />
+		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="10" />
-			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
+		<TextBlock Grid.Column="1"
+				   Grid.RowSpan="5"
+				   HorizontalAlignment="Left"
+				   TextWrapping="WrapWithOverflow">
+			<Run x:Name="FpsLogView" />
+			<LineBreak />
+			<Button Width="30"
+					x:Name="DLDBut"
+					Click="Button_Click"
+					Height="30"
+					ToolTip="Dump line drawer"
+					Content="DLD" />
+			<LineBreak />
+			<Run x:Name="LogView" />
+		</TextBlock>
 		<Grid x:Name="ContainerGrid"
 			  Focusable="True"
 			  MouseEnter="ContainerGrid_MouseEnter"
@@ -136,7 +155,7 @@
 					Height="90">
 				<Grid>
 					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="90"/>
+						<ColumnDefinition Width="90" />
 						<ColumnDefinition />
 					</Grid.ColumnDefinitions>
 					<Grid>
@@ -176,20 +195,25 @@
 
 					<TextBlock Grid.Column="1">
 						<Run Text="Top:" />
-						<Run x:Name="topText"/>
+						<Run x:Name="topText" />
 						<LineBreak />
 						<Run Text="Left:" />
 						<Run x:Name="leftText" />
 					</TextBlock>
 				</Grid>
-			
+
 			</Border>
-			<Button Content="Add New Value"
-					x:Name="AddNewValueBut"
-					Click="Button_Click" />
-			<Button Content="Refresh"
-					x:Name="Refresh"
-					Click="Button_Click" />
+			<StackPanel>
+				<Button Content="Add New Value With Anim"
+						x:Name="AddNewValueButWithAnim"
+						Click="Button_Click" />
+				<Button Content="Add New Value"
+						x:Name="AddNewValueBut"
+						Click="Button_Click" />
+				<Button Content="Refresh"
+						x:Name="Refresh"
+						Click="Button_Click" />
+			</StackPanel>
 		</WrapPanel>
 	</Grid>
 

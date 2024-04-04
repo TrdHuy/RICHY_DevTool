@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using RICHYEngine.Views.Animation;
+using RICHYEngine.Views.Holders.GraphHolder.Elements;
+using System.Diagnostics;
 using System.Numerics;
 using static RICHYEngine.LogCompat.Logger.RICHYEngineLogger;
 
@@ -24,6 +26,17 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 rectGenerator)
         { }
 
+        public override string Dump(bool isDumpGraphLineDrawer = false)
+        {
+            var dump = base.Dump(false);
+            dump += $"\nmCurrentStartIndex={mCurrentStartIndex}\n";
+            dump += $"mCurrentEndIndex={mCurrentEndIndex}\n";
+            if (isDumpGraphLineDrawer)
+            {
+                dump += "\n" + elementCache.lineConnectionDrawer?.Dump();
+            }
+            return dump;
+        }
         public override void MoveGraph(int offsetLeft, int offsetTop)
         {
             base.MoveGraph(offsetLeft, offsetTop);
@@ -46,6 +59,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             mCurrentEndIndex = GetEndPointIndex();
             base.ShowGraph(valueList);
         }
+
         public async void AddPointValueWithAnimation(IGraphPointValue newValue)
         {
             try
@@ -64,40 +78,119 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 var index = mCurrentShowingValueList.Count - 1;
                 if (index > mCurrentEndIndex || index < mCurrentStartIndex)
                 {
+                    elementCache.addingNewValueSemaphore.Release();
                     return;
                 }
                 var isShouldAddToParent = CheckIndexVisibilityByXDistance(index);
                 GenerateLabelX(newValue, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, index,
                     addToParent: isShouldAddToParent);
-                if (elementCache.lineConnectionDrawer == null)
+                IGraphPolyLineDrawer? graphPolyLineDrawer = elementCache.lineConnectionDrawer;
+                if (graphPolyLineDrawer == null)
                 {
-                    IGraphPolyLineDrawer graphPolyLineDrawer = mGraphPolyLineGenerator.Invoke(GraphElement.Line);
+                    graphPolyLineDrawer = mGraphPolyLineGenerator.Invoke(GraphElement.Line);
                     elementCache.lineConnectionDrawer = graphPolyLineDrawer;
-                    GeneratePoint(newValue, index, mGraphContainer.GraphHeight, graphPolyLineDrawer,
-                        addToParent: isShouldAddToParent);
                 }
-                else
+                var lastIndex = elementCache.pointDrawers.GetElementCacheCount() - 1;
+                IGraphPointDrawer? lastPointCache = null;
+                if (lastIndex > 0)
                 {
-                    GeneratePoint(newValue, index, mGraphContainer.GraphHeight,
-                        elementCache.lineConnectionDrawer,
-                        addToParent: isShouldAddToParent);
+                    lastPointCache = elementCache.pointDrawers.GetElementAt(lastIndex);
+                }
+
+                var point = GeneratePoint(newValue, index, mGraphContainer.GraphHeight, graphPolyLineDrawer,
+                        addToParent: false,
+                        toLast: true,
+                        polyLineStartPoint: lastPointCache?.GetPositionOnCanvas());
+                var pointDrawer = point.Item1;
+                var pointIndex = point.Item2;
+                var pointIndexOnPolyLine = point.Item3;
+
+                if (pointIndex > 0)
+                {
+                    var previousPointDrawer = elementCache.pointDrawers.GetElementAt(pointIndex - 1);
+                    var fromPos = previousPointDrawer.GetPositionOnCanvas();
+                    var toPos = pointDrawer.GetPositionOnCanvas();
+                    var movingPoint = mGraphPointGenerator.Invoke(GraphElement.Point);
+                    mGraphContainer.PointAndLineCanvasHolder.AddChild(movingPoint);
+                    movingPoint.SetUpVisual(GraphElement.Point);
+                    MovePointAndLineToward(fromPos,
+                        toPos,
+                        movingPoint,
+                        graphPolyLineDrawer,
+                        pointIndexOnPolyLine,
+                        durationMs: 500,
+                        () =>
+                        {
+                            if (isShouldAddToParent)
+                            {
+                                mGraphContainer.PointAndLineCanvasHolder.AddChild(pointDrawer);
+                            }
+                            mGraphContainer.PointAndLineCanvasHolder.RemoveChild(movingPoint);
+                            elementCache.addingNewValueSemaphore.Release();
+                        });
                 }
             }
             finally
             {
-                elementCache.addingNewValueSemaphore.Release();
             }
         }
 
-        private async Task MovePointToward(Vector2 fromPos,
-            Vector2 toPos, 
-            int durationMs,
+        private void MovePointAndLineToward(Vector2 fromPos,
+            Vector2 toPos,
             IGraphPointDrawer targetPoint,
             IGraphPolyLineDrawer targetLine,
-            int pointIndexOnPolyLine)
+            int pointIndexOnPolyLine,
+            int durationMs = 1000,
+            Action? animationEndCallback = null)
         {
+            var A = (fromPos.Y - toPos.Y) / (fromPos.X - toPos.X);
+            var B = (toPos.Y * fromPos.X - fromPos.Y * toPos.X) / (fromPos.X - toPos.X);
 
+            var curX = fromPos.X;
+            var velocityX = xPointDistance / durationMs * 1000f;
+            var isMoveRight = fromPos.X < toPos.X;
+            void MovePointToWardAnimating(double fps)
+            {
+                var newPos = new Vector2(curX, curX * A + B);
+                targetLine.ChangePointPosition(pointIndexOnPolyLine, newPos);
+                targetPoint.SetPositionOnCanvas(GraphElement.Point, newPos);
+                if (isMoveRight)
+                {
+                    if (curX >= toPos.X)
+                    {
+                        AnimationController.Animating -= MovePointToWardAnimating;
+                        targetLine.ChangePointPosition(pointIndexOnPolyLine, toPos);
+                        targetPoint.SetPositionOnCanvas(GraphElement.Point, toPos);
+                        animationEndCallback?.Invoke();
+                        return;
+                    }
+                    curX += velocityX / (float)fps;
+                    if (curX > toPos.X)
+                    {
+                        curX = toPos.X;
+                    }
+                }
+                else
+                {
+                    if (curX <= toPos.X)
+                    {
+                        AnimationController.Animating -= MovePointToWardAnimating;
+                        targetLine.ChangePointPosition(pointIndexOnPolyLine, toPos);
+                        targetPoint.SetPositionOnCanvas(GraphElement.Point, toPos);
+                        animationEndCallback?.Invoke();
+                        return;
+                    }
+                    curX -= velocityX / (float)fps;
+                    if (curX < toPos.X)
+                    {
+                        curX = toPos.X;
+                    }
+                }
+            }
+            AnimationController.Animating += MovePointToWardAnimating; ;
         }
+
+
         public override int AddPointValue(IGraphPointValue newValue)
         {
             if (mCurrentShowingValueList != null)
@@ -205,14 +298,14 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
             for (int i = mCurrentStartIndex; i <= mCurrentEndIndex
                 && i < mCurrentShowingValueList.Count
-                && i - mCurrentStartIndex < elementCache.pointDrawers.Count; i++)
+                && i - mCurrentStartIndex < elementCache.pointDrawers.GetElementCacheCount(); i++)
             {
-                var labelX = elementCache.labelXDrawers[i - mCurrentStartIndex];
+                var labelX = elementCache.labelXDrawers.GetElementAt(i - mCurrentStartIndex);
                 float xPos = GetXPosForPointBaseOnPointIndex(i);
                 labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
 
                 float yPos = GetYPosForPointBaseOnValue(mCurrentShowingValueList![i]);
-                var point = elementCache.pointDrawers[i - mCurrentStartIndex];
+                var point = elementCache.pointDrawers.GetElementAt(i - mCurrentStartIndex);
                 var oldPointPos = point.GetPositionOnCanvas();
                 var newPointPos = new Vector2(xPos, yPos);
                 point.SetPositionOnCanvas(GraphElement.Point, newPointPos);
@@ -224,8 +317,8 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         {
             mCurrentStartIndex = GetStartPointIndex();
             mCurrentEndIndex = GetEndPointIndex();
-            elementCache.pointDrawers.Clear();
-            elementCache.labelXDrawers.Clear();
+            elementCache.pointDrawers.ClearCache();
+            elementCache.labelXDrawers.ClearCache();
             mGraphContainer.LabelXCanvasHolder.Clear();
             mGraphContainer.PointAndLineCanvasHolder.Clear();
 
@@ -236,7 +329,12 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         private void UpdateDisplayRangeAndModifyElements(float oldXDistance, float newXDistance, int newStartIndex, int newEndIndex)
         {
-            D(TAG, $"UpdateDisplayRangeAndModifyElements: oldXDistance={oldXDistance},newXDistance={newXDistance},newStartIndex={newStartIndex},newEndIndex={newEndIndex}");
+            D(TAG, $"UpdateDisplayRangeAndModifyElements: oldXDistance={oldXDistance}," +
+                $"newXDistance={newXDistance}," +
+                $"mCurrentStartIndex={mCurrentStartIndex}," +
+                $"mCurrentEndIndex={mCurrentEndIndex}," +
+                $"newStartIndex={newStartIndex}," +
+                $"newEndIndex={newEndIndex}");
             if (mCurrentShowingValueList == null || elementCache.lineConnectionDrawer == null)
             {
                 throw new Exception("Should not be null here");
@@ -247,17 +345,18 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 D(TAG, $"mCurrentStartIndex={mCurrentStartIndex}");
                 D(TAG, $"newStartIndex ={newStartIndex}");
-                D(TAG, $"visibleItemCount ={elementCache.pointDrawers.Count}");
+                D(TAG, $"visibleItemCount ={elementCache.pointDrawers.GetElementCacheCount()}");
 
                 for (int i = mCurrentStartIndex; i < newStartIndex &&
                         i < totalPointCount &&
-                        elementCache.pointDrawers.Count > 0; i++)
+                        elementCache.pointDrawers.GetElementCacheCount() > 0; i++)
                 {
-                    var pointCache = elementCache.pointDrawers[0];
-                    elementCache.pointDrawers.RemoveAt(0);
+                    var pointCache = elementCache.pointDrawers.GetElementAt(0);
+                    elementCache.pointDrawers.RemoveElementAt(0);
                     mGraphContainer.PointAndLineCanvasHolder.RemoveChild(pointCache);
-                    mGraphContainer.LabelXCanvasHolder.RemoveChild(elementCache.labelXDrawers[0]);
-                    elementCache.labelXDrawers.RemoveAt(0);
+                    var labelXDrawer = elementCache.labelXDrawers.GetElementAt(0);
+                    mGraphContainer.LabelXCanvasHolder.RemoveCanvasChildAndAssignNewState(labelXDrawer, elementCache.labelXDrawers.GetElementStat(labelXDrawer));
+                    elementCache.labelXDrawers.RemoveElementAt(0);
                     elementCache.lineConnectionDrawer!.RemovePoint(pointCache.GetPositionOnCanvas());
                     D(TAG, $"Remove at={i - mCurrentStartIndex}");
                 }
@@ -267,7 +366,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 D(TAG, $"mCurrentStartIndex={mCurrentStartIndex}");
                 D(TAG, $"newStartIndex={newStartIndex}");
-                D(TAG, $"visibleItemCount={elementCache.pointDrawers.Count}");
+                D(TAG, $"visibleItemCount={elementCache.pointDrawers.GetElementCacheCount()}");
 
                 var startAddIndex = mCurrentStartIndex - 1 >= totalPointCount ? totalPointCount - 1 : mCurrentStartIndex - 1;
                 for (int i = startAddIndex; i >= newStartIndex && i < totalPointCount; i--)
@@ -288,7 +387,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 D(TAG, $"mCurrentEndIndex={mCurrentEndIndex}");
                 D(TAG, $"newEndIndex={newEndIndex}");
-                D(TAG, $"visibleItemCount={elementCache.pointDrawers.Count}");
+                D(TAG, $"visibleItemCount={elementCache.pointDrawers.GetElementCacheCount()}");
                 for (int i = mCurrentEndIndex + 1; i <= newEndIndex
                         && i < totalPointCount
                         && i >= mCurrentStartIndex; i++)
@@ -308,19 +407,20 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             {
                 D(TAG, $"mCurrentEndIndex={mCurrentEndIndex}");
                 D(TAG, $"newEndIndex={newEndIndex}");
-                D(TAG, $"visibleItemCount={elementCache.pointDrawers.Count}");
+                D(TAG, $"visibleItemCount={elementCache.pointDrawers.GetElementCacheCount()}");
                 var deleteFromIndex = mCurrentEndIndex < totalPointCount ? mCurrentEndIndex : totalPointCount - 1;
                 for (int i = deleteFromIndex; i > newEndIndex
-                        && i - mCurrentStartIndex < elementCache.pointDrawers.Count; i--)
+                        && i - mCurrentStartIndex < elementCache.pointDrawers.GetElementCacheCount(); i--)
                 {
-                    var lastIndex = elementCache.pointDrawers.Count - 1;
-                    var pointCache = elementCache.pointDrawers[lastIndex];
-                    elementCache.pointDrawers.RemoveAt(lastIndex);
+                    var lastIndex = elementCache.pointDrawers.GetElementCacheCount() - 1;
+                    var pointCache = elementCache.pointDrawers.GetElementAt(lastIndex);
+                    elementCache.pointDrawers.RemoveElementAt(lastIndex);
                     mGraphContainer.PointAndLineCanvasHolder.RemoveChild(pointCache);
-                    mGraphContainer.LabelXCanvasHolder.RemoveChild(elementCache.labelXDrawers[lastIndex]);
-                    elementCache.labelXDrawers.RemoveAt(lastIndex);
-                    elementCache.lineConnectionDrawer!.RemovePoint(pointCache.GetPositionOnCanvas());
-                    D(TAG, $"Remove at={lastIndex}");
+                    var labelXDrawer = elementCache.labelXDrawers.GetElementAt(lastIndex);
+                    mGraphContainer.LabelXCanvasHolder.RemoveCanvasChildAndAssignNewState(labelXDrawer, elementCache.labelXDrawers.GetElementStat(labelXDrawer));
+                    elementCache.labelXDrawers.RemoveElementAt(lastIndex);
+                    var isLineDrawerRemovePointSuccess = elementCache.lineConnectionDrawer!.RemovePoint(pointCache.GetPositionOnCanvas());
+                    D(TAG, $"Remove at={lastIndex}, isLineDrawerRemovePointSuccess={isLineDrawerRemovePointSuccess}");
                 }
                 mCurrentEndIndex = newEndIndex;
             }
@@ -356,6 +456,13 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             return endPoint;
         }
 
+
+        /// <summary>
+        /// Hàm này kiểm tra xem 1 point có nên được hiển thị hay không dựa
+        /// vào khoảng cách giữa các point (XDistance)
+        /// </summary>
+        /// <param name="realIndex"></param>
+        /// <returns></returns>
         private bool CheckIndexVisibilityByXDistance(int realIndex)
         {
             //D(TAG, $"xPointDistance={xPointDistance}");
@@ -377,15 +484,15 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
             if (mCurrentEndIndex < mCurrentShowingValueList.Count)
             {
-                Debug.Assert(elementCache.pointDrawers.Count == mCurrentEndIndex - mCurrentStartIndex + 1);
+                Debug.Assert(elementCache.pointDrawers.GetElementCacheCount() == mCurrentEndIndex - mCurrentStartIndex + 1);
             }
             else if (mCurrentStartIndex < mCurrentShowingValueList.Count)
             {
-                Debug.Assert(elementCache.pointDrawers.Count == mCurrentShowingValueList.Count - mCurrentStartIndex);
+                Debug.Assert(elementCache.pointDrawers.GetElementCacheCount() == mCurrentShowingValueList.Count - mCurrentStartIndex);
             }
             else
             {
-                Debug.Assert(elementCache.pointDrawers.Count == 0);
+                Debug.Assert(elementCache.pointDrawers.GetElementCacheCount() == 0);
             }
             //foreach (var p in elementCache.pointDrawers)
             //{

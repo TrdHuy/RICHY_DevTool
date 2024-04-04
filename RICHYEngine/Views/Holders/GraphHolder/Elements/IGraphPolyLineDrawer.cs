@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace RICHYEngine.Views.Holders.GraphHolder
+namespace RICHYEngine.Views.Holders.GraphHolder.Elements
 {
     public interface IGraphPolyLineDrawer : ICanvasChild
     {
@@ -11,7 +11,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         /// <returns>Inserted index</returns>
         int AddNewPoint(Vector2 point, bool toLast = true);
 
-        void RemovePoint(Vector2 point);
+        bool RemovePoint(Vector2 point);
 
         void ChangePointPosition(Vector2 oldPos, Vector2 newPos);
         void ChangePointPosition(int pointIndex, Vector2 newPos);
@@ -20,5 +20,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         [Obsolete("For debugging")]
         object Drawer { get; }
+
+        string Dump();
     }
 }

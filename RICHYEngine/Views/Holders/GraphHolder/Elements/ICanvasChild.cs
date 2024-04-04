@@ -1,4 +1,4 @@
-﻿namespace RICHYEngine.Views.Holders.GraphHolder
+﻿namespace RICHYEngine.Views.Holders.GraphHolder.Elements
 {
     public interface ICanvasChild
     {

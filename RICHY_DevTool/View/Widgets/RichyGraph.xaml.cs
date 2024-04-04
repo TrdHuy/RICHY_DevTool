@@ -1,5 +1,7 @@
 ﻿using RICHYEngine.LogCompat;
+using RICHYEngine.Views.Animation;
 using RICHYEngine.Views.Holders.GraphHolder;
+using RICHYEngine.Views.Holders.GraphHolder.Elements;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -22,6 +24,14 @@ namespace RICHY_DevTool.View.Widgets
         {
             InitializeComponent();
             var pointSize = new Vector2(8, 8);
+            AnimationController.StartAnimationFPSCounter((fps, act) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    FpsLogView.Text = $"FPS: {(int)fps}, Time: {DateTime.Now.ToString("HH:mm:ss")}";
+                    act?.Invoke(fps);
+                }, priority: System.Windows.Threading.DispatcherPriority.Normal);
+            });
             graphHolder = new VirtualizingGraphHolder(
                graphContainer: new GraphContainerImpl(MainContainerCanvas,
                     mPointContainerCanvas: PointAndLineContainerCanvas,
@@ -182,11 +192,12 @@ namespace RICHY_DevTool.View.Widgets
         {
             var listValue = new List<IGraphPointValue>();
             Random r = new Random();
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 5; i++)
             {
-                listValue.Add(CreateValue(r.Next(5, 140), DateTime.Now.AddDays(i)));
+                listValue.Add(CreateValue(r.Next(5, 100), DateTime.Now.AddDays(i)));
             }
             graphHolder.ShowGraph(listValue);
+            LogView.Text = graphHolder.Dump();
         }
 
         IGraphPointValue CreateValue(int yValue, DateTime xValue)
@@ -205,6 +216,7 @@ namespace RICHY_DevTool.View.Widgets
                 //graphHolder?.ChangeZoomX((int)e.NewValue - (int)e.OldValue);
                 graphHolder?.ChangeXDistance((int)e.NewValue);
             }
+            LogView.Text = graphHolder?.Dump();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -228,12 +240,23 @@ namespace RICHY_DevTool.View.Widgets
             else if (sender == AddNewValueBut)
             {
                 Random r = new Random();
-                graphHolder.AddPointValue(CreateValue(r.Next(0, 200), DateTime.Now));
+                graphHolder.AddPointValue(CreateValue(r.Next(5, 100), DateTime.Now));
+            }
+            else if (sender == AddNewValueButWithAnim)
+            {
+                Random r = new Random();
+                graphHolder.AddPointValueWithAnimation(CreateValue(r.Next(5, 100), DateTime.Now));
             }
             else if (sender == Refresh)
             {
                 showGraph();
             }
+            else if (sender == DLDBut)
+            {
+                LogView.Text = graphHolder?.Dump(isDumpGraphLineDrawer: true);
+                return;
+            }
+            LogView.Text = graphHolder?.Dump();
         }
 
         private void TextBox_KeyUp(object sender, KeyEventArgs e)
@@ -243,6 +266,7 @@ namespace RICHY_DevTool.View.Widgets
                 var newDistance = Convert.ToInt32(XDistanceBox.Text);
                 graphHolder?.ChangeXDistance((int)newDistance);
             }
+            LogView.Text = graphHolder?.Dump();
         }
 
         private void ControlCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -250,6 +274,7 @@ namespace RICHY_DevTool.View.Widgets
             var mousePos = e.GetPosition(MainContainerCanvas);
             var reverseMouse = new Vector2((float)mousePos.X, (float)(MainContainerCanvas.ActualHeight - mousePos.Y));
             graphHolder?.ChangeZoomX(e.Delta > 0 ? 1 : -1, reverseMouse);
+            LogView.Text = graphHolder?.Dump();
         }
     }
 
@@ -411,6 +436,8 @@ namespace RICHY_DevTool.View.Widgets
     {
         private Canvas mChildCanvas;
         private Canvas mParentsCanvas;
+        private HashSet<ICanvasChild> mChildrens = new HashSet<ICanvasChild>();
+
         public CanvasHolderImpl(Canvas canvasHolder, Canvas mainContainerCanvas)
         {
             mChildCanvas = canvasHolder;
@@ -427,6 +454,7 @@ namespace RICHY_DevTool.View.Widgets
                 if (!mChildCanvas.Children.Contains(cast.Child))
                 {
                     mChildCanvas.Children.Add(cast.Child);
+                    mChildrens.Add(child);
                     return true;
                 }
                 return false;
@@ -437,9 +465,10 @@ namespace RICHY_DevTool.View.Widgets
             }
         }
 
-        public void Clear()
+        public HashSet<ICanvasChild> Clear()
         {
             mChildCanvas.Children.Clear();
+            return mChildrens;
         }
 
         public bool RemoveChild(ICanvasChild child)
@@ -450,6 +479,7 @@ namespace RICHY_DevTool.View.Widgets
                 if (mChildCanvas.Children.Contains(cast.Child))
                 {
                     mChildCanvas.Children.Remove(cast.Child);
+                    mChildrens.Remove(child);
                     return true;
                 }
                 return false;
@@ -569,12 +599,23 @@ namespace RICHY_DevTool.View.Widgets
             mPolyLine.Points.RemoveAt(pointIndex);
         }
 
-        public void RemovePoint(Vector2 point)
+        public bool RemovePoint(Vector2 point)
         {
             var reversePos = GetReversePosForPoint(point);
-            mPolyLine.Points.Remove(new Point(reversePos.X, reversePos.Y));
+            return mPolyLine.Points.Remove(new Point(reversePos.X, reversePos.Y));
         }
 
+        public string Dump()
+        {
+            var dump = "===============\nGraphPolyLineImpl:\n";
+            int i = 0;
+            foreach (var p in mPolyLine.Points)
+            {
+                var rvs = GetReversePosForPoint(new Vector2((float)p.X, (float)p.Y));
+                dump += $"{i++}: RealPoint=<{p.X},{p.Y}>, ReversePoint=<{rvs.X},{rvs.Y}>\n";
+            }
+            return dump;
+        }
     }
 
     public class RectDrawerImpl : SingleElementImpl, IRectDrawer

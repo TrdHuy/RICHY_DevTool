@@ -1,8 +1,5 @@
-﻿
-using System.Collections.ObjectModel;
-using System.Diagnostics;
+﻿using RICHYEngine.Views.Holders.GraphHolder.Elements;
 using System.Numerics;
-using static RICHYEngine.LogCompat.Logger.RICHYEngineLogger;
 
 namespace RICHYEngine.Views.Holders.GraphHolder
 {
@@ -13,45 +10,10 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         Vector2 GetRectSize();
     }
 
-    internal static class HolderExtension
-    {
-        public static void AddChildInternal(this ICanvasHolder holder, ICanvasChild child)
-        {
-            holder.AddChild(child);
-        }
-    }
-
     public delegate void GraphPosChanged(int oldLeft, int oldTop, int newLeft, int newTop);
 
     public class GraphHolder
     {
-        protected class GraphElementCache
-        {
-            public IGraphPolyLineDrawer? lineConnectionDrawer = null;
-            public Collection<IGraphPointDrawer> pointDrawers = new Collection<IGraphPointDrawer>();
-            public Collection<IGraphLabelDrawer> labelXDrawers = new Collection<IGraphLabelDrawer>();
-            public Collection<IGraphLabelDrawer> labelYDrawers = new Collection<IGraphLabelDrawer>();
-
-            #region Popup cache
-            public IGraphLabelDrawer? pointDetailLabelCache = null;
-            public Vector2 pointDetailMousePos = Vector2.Zero;
-            #endregion
-
-            #region Animation cache
-            public SemaphoreSlim addingNewValueSemaphore = new SemaphoreSlim(1, 1);
-            #endregion
-
-            public void Clear()
-            {
-                lineConnectionDrawer = null;
-                pointDrawers.Clear();
-                labelXDrawers.Clear();
-                labelYDrawers.Clear();
-
-                pointDetailLabelCache = null;
-                pointDetailMousePos = Vector2.Zero;
-            }
-        }
         public event GraphPosChanged? GraphPosChanged;
         private const string TAG = "GraphHolder";
 
@@ -93,6 +55,19 @@ namespace RICHYEngine.Views.Holders.GraphHolder
         }
 
         #region public API
+        public virtual string Dump(bool isDumpGraphLineDrawer = false)
+        {
+            var dump = elementCache.DumpLog() + "\n" +
+                $"xPointDistance={xPointDistance}\n" +
+                $"yMax={yMax}\n" +
+                $"yRate= yMax / graphHeight ={yMax / mGraphContainer.GraphHeight} ";
+            if (isDumpGraphLineDrawer)
+            {
+                dump += "\n" + elementCache.lineConnectionDrawer?.Dump();
+            }
+            return dump;
+        }
+
         public void ShowPointDetail(bool isShowing, Vector2 mousePos)
         {
             const int CONTENT_PADDING = 10;
@@ -165,7 +140,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 mCurrentShowingValueList.Add(newValue);
             }
 
-            var index = elementCache.pointDrawers.Count;
+            var index = elementCache.pointDrawers.GetElementCacheCount();
             GenerateLabelX(newValue, DISPLAY_OFFSET_Y, DISPLAY_OFFSET_X, index);
             if (elementCache.lineConnectionDrawer == null)
             {
@@ -268,14 +243,11 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 var normalizedValue = i * dashYDistance / graphHeight;
                 var offset = mPointCanvasHolderTop / graphHeight;
                 float yPos = GetPosYForLabelY(i);
-                if (mGraphContainer.LabelYCanvasHolder.AddChild(labelY))
-                {
-                    labelY.SetUpVisual(GraphElement.LabelY);
-                    labelY.SetText((yMax * (normalizedValue + offset)).ToString("F2"));
-                    labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(GetPosXForLabelY(), yPos));
-                    elementCache.labelYDrawers.Add(labelY);
-                }
-
+                labelY.SetUpVisual(GraphElement.LabelY);
+                labelY.SetText((yMax * (normalizedValue + offset)).ToString("F2"));
+                labelY.SetPositionOnCanvas(GraphElement.LabelY, new Vector2(GetPosXForLabelY(), yPos));
+                var state = elementCache.labelYDrawers.AddElementToCache(labelY);
+                mGraphContainer.LabelYCanvasHolder.AddCanvasChildAndAssignNewState(labelY, state);
             }
         }
 
@@ -301,11 +273,11 @@ namespace RICHYEngine.Views.Holders.GraphHolder
 
         protected void InvalidateLabelY(float graphHeight, float dashYDistance)
         {
-            for (int i = 0; i < elementCache.labelYDrawers.Count; i++)
+            for (int i = 0; i < elementCache.labelYDrawers.GetElementCacheCount(); i++)
             {
                 var offset = -mPointCanvasHolderTop / graphHeight;
                 var normalizedValue = i * dashYDistance / graphHeight;
-                var labelY = elementCache.labelYDrawers[i];
+                var labelY = elementCache.labelYDrawers.GetElementAt(i);
                 labelY.SetText((yMax * (normalizedValue + offset)).ToString("F2"));
             }
         }
@@ -340,10 +312,7 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             bool addToParent = true)
         {
             var labelX = mGraphLabelGenerator.Invoke(GraphElement.LabelX);
-            if (addToParent)
-            {
-                mGraphContainer.LabelXCanvasHolder.AddChild(labelX);
-            }
+
             float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
             labelX.SetUpVisual(GraphElement.LabelX);
             var xValue = pointValue.XValue;
@@ -356,13 +325,10 @@ namespace RICHYEngine.Views.Holders.GraphHolder
                 labelX.SetText(pointValue.XValue?.ToString() ?? pointIndex.ToString());
             }
             labelX.SetPositionOnCanvas(GraphElement.LabelX, new Vector2(xPos, 0));
-            if (toLast)
+            var state = elementCache.labelXDrawers.AddElementToCache(labelX, toLast);
+            if (addToParent)
             {
-                elementCache.labelXDrawers.Add(labelX);
-            }
-            else
-            {
-                elementCache.labelXDrawers.Insert(0, labelX);
+                mGraphContainer.LabelXCanvasHolder.AddCanvasChildAndAssignNewState(labelX, state);
             }
         }
 
@@ -398,15 +364,26 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
         }
 
-
-        protected virtual void GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight,
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="graphPointValue"></param>
+        /// <param name="pointIndex"></param>
+        /// <param name="graphHeight"></param>
+        /// <param name="graphPolyLineDrawer"></param>
+        /// <param name="toLast"></param>
+        /// <param name="addToParent"></param>
+        /// <returns>
+        /// Item1: current point drawer
+        /// Item2: index of current point drawer
+        /// Item3: index of current point drawer on poly line
+        /// </returns>
+        protected virtual (IGraphPointDrawer, int, int) GeneratePoint(IGraphPointValue graphPointValue, int pointIndex, float graphHeight,
             IGraphPolyLineDrawer graphPolyLineDrawer,
             bool toLast = true,
-            bool addToParent = true)
+            bool addToParent = true,
+            Vector2? polyLineStartPoint = null)
         {
-            //TODO: Current support to add new point at last index only
-            //Debug.Assert(elementCache.pointDrawers.Count == pointIndex);
-
             float xPos = GetXPosForPointBaseOnPointIndex(pointIndex);
             float yPos = GetYPosForPointBaseOnValue(graphPointValue);
             IGraphPointDrawer point = mGraphPointGenerator.Invoke(GraphElement.Point);
@@ -417,15 +394,19 @@ namespace RICHYEngine.Views.Holders.GraphHolder
             }
             point.SetUpVisual(GraphElement.Point);
             point.SetPositionOnCanvas(GraphElement.Point, new Vector2(xPos, yPos));
+            var index = 0;
             if (toLast)
             {
-                elementCache.pointDrawers.Add(point);
+                elementCache.pointDrawers.AddElementToCache(point);
+                index = elementCache.pointDrawers.GetElementCacheCount() - 1;
             }
             else
             {
-                elementCache.pointDrawers.Insert(0, point);
+                elementCache.pointDrawers.AddElementToCache(point, toLast: false);
             }
-            graphPolyLineDrawer.AddNewPoint(new Vector2(xPos, yPos), toLast);
+            var indexOnPolyLine = graphPolyLineDrawer.AddNewPoint(polyLineStartPoint ?? new Vector2(xPos, yPos), toLast);
+
+            return new(point, index, indexOnPolyLine);
         }
 
         /// <summary>

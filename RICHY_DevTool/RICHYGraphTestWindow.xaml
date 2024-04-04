@@ -7,10 +7,10 @@
 		xmlns:wg="clr-namespace:RICHY_DevTool.View.Widgets"
 		mc:Ignorable="d"
 		Title="RICHYGraphTestWindow"
-		Height="500"
+		Height="600"
 		Background="Brown"
 		Loaded="Window_Loaded"
-		Width="800">
+		Width="1200">
 	<Grid x:Name="ContainerGrid">
 		<wg:RichyGraph />
 	</Grid>

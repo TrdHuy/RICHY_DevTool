@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RICHYEngine.Views.Holders.GraphHolder
+namespace RICHYEngine.Views.Holders.GraphHolder.Elements
 {
     public interface IGraphPointValue
     {
